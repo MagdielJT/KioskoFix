@@ -14,7 +14,7 @@
         <p class="panel-heading">Información General</p>
         <div class="panel-content">
           <div class="columns is-desktop container">
-            <div class="column is-3">
+            <div class="column is-2">
               <b-field label="R.F.C." label-position="on-border" expanded>
                 <b-input
                   v-model="clientData.cliente.rfc"
@@ -27,7 +27,7 @@
                 ></b-input>
               </b-field>
             </div>
-            <div class="column is-3">
+            <div class="column is-2">
               <b-field
                 label="Tipo de persona"
                 label-position="on-border"
@@ -57,7 +57,7 @@
                 </section>
               </b-field>
             </div>
-            <div class="column is-3" v-if="clientData.cliente.tipo">
+            <div class="column is-2" v-if="clientData.cliente.tipo && !clientData.cliente.existe">
               <b-field
                 label="Nombre (s)"
                 v-if="clientData.cliente.tipo"
@@ -67,12 +67,12 @@
                 <b-input
                   value=""
                   type="text"
-                  v-model="clientData.cliente.nombre"
+                  v-model="inputNombre"
                   required
                 ></b-input>
               </b-field>
             </div>
-            <div class="column is-3" v-if="clientData.cliente.tipo">
+            <div class="column is-2" v-if="clientData.cliente.tipo && !clientData.cliente.existe">
               <b-field
                 label="Apellidos"
                 v-if="clientData.cliente.tipo"
@@ -82,14 +82,14 @@
                 <b-input
                   value=""
                   type="text"
-                  v-model="clientData.cliente.apellido"
+                  v-model="inputApellido"
                   required
                 ></b-input>
               </b-field>
             </div>
-            <div class="column is-6" v-if="!clientData.cliente.tipo">
+            <div class="column is-4" v-if="!clientData.cliente.tipo && !clientData.cliente.existe">
               <b-field
-                label="Razón Social"
+                label="Compañia"
                 v-if="!clientData.cliente.tipo"
                 label-position="on-border"
                 expanded
@@ -97,11 +97,25 @@
                 <b-input
                   value=""
                   type="text"
-                  v-model="clientData.cliente.compania"
+                  v-model="inputCompania"
                   required
                 ></b-input>
               </b-field>
             </div>
+            <div class="column is-4">
+                  <b-field
+                    label="Razón Social a Facturar"
+                    label-position="on-border"
+                    expanded
+                  >
+                    <b-input
+                      value=""
+                      type="text"
+                      v-model="clientData.cliente.razonSocial"
+                      required
+                    ></b-input>
+                  </b-field>
+                </div>
           </div>
         </div>
         <div class="panel-content">
@@ -460,6 +474,33 @@ export default {
         this.$store.dispatch("setEmailsSelecteds", newValue);
       },
     },
+    inputNombre: {
+      get() {
+        return this.clientData.cliente.nombre
+      },
+      set(newValue){
+        this.clientData.cliente.nombre = newValue
+        this.clientData.cliente.razonSocial = (this.clientData.cliente.nombre + ' ' + this.clientData.cliente.apellido).toUpperCase()
+      }
+    },
+    inputApellido: {
+      get() {
+        return this.clientData.cliente.apellido
+      },
+      set(newValue) {
+        this.clientData.cliente.apellido = newValue
+        this.clientData.cliente.razonSocial = (this.clientData.cliente.nombre + ' ' + this.clientData.cliente.apellido).toUpperCase()
+      }
+    },
+    inputCompania: {
+      get() {
+        return this.clientData.cliente.compania
+      },
+      set(newValue) {
+        this.clientData.cliente.compania = newValue
+        this.clientData.cliente.razonSocial = this.clientData.cliente.compania.toUpperCase()
+      }
+    }
   },
   beforeCreate() {},
   created() {

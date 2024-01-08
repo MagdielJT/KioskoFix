@@ -16,19 +16,15 @@
                       class="has-text-"
                     ></b-input>
                   </b-field>
-                  <b-field horizontal label="Cliente">
+                  <b-field horizontal label="Razón Social a Facturar">
                     <b-input
                       name="cliente"
                       disabled
                       type="text"
-                      v-if="clientData.cliente.tipo"
                       :value="
-                        clientData.cliente.nombre +
-                        ' ' +
-                        clientData.cliente.apellido
-                      "
+                        clientData.cliente.razonSocial"
                       class="has-text-"
-                    ></b-input>
+                    ></b-input><!-- 
                     <b-input
                       name="cliente"
                       disabled
@@ -36,7 +32,7 @@
                       v-else
                       :value="clientData.cliente.compania"
                       class="has-text-"
-                    ></b-input>
+                    ></b-input> -->
                   </b-field>
                   <b-field horizontal label="R.F.C.">
                     <b-input
