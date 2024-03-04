@@ -104,21 +104,36 @@ export default {
       try {
         let self = this;
         console.debug("📍 ~ getConfigData ~ self", self);
-        let str = `
-        var urlMode=null;
+        let str=`
+        var httpsMode=null;
       
-        require(['N/url'],function(urlMode){
+        require(['N/https'],function(httpsMode){
           setTimeout( () => {
-          var url=urlMode.resolveScript({
-            scriptId:'customscript_efx_kiosko_service_config',
-            deploymentId:"customdeploy_efx_kiosko_service_config",
-            returnExternalUrl:true,
-            params:{custparam_mode:"configurationData"}
+          var url=httpsMode.requestSuitelet({
+              scriptId:'customscript_efx_kiosko_service_config',
+              deploymentId:"customdeploy_efx_kiosko_service_config",
+              external:true,
+              urlParams:{custparam_mode:"configurationData"}
           });
-          self.getConfigAxios(url)
+          self.assignConfigResult(JSON.parse(url.body))
         }, 200);
-        });
+      });
         `;
+        // let str = `
+        // var urlMode=null;
+      
+        // require(['N/url'],function(urlMode){
+        //   setTimeout( () => {
+        //   var url=urlMode.resolveScript({
+        //     scriptId:'customscript_efx_kiosko_service_config',
+        //     deploymentId:"customdeploy_efx_kiosko_service_config",
+        //     returnExternalUrl:true,
+        //     params:{custparam_mode:"configurationData"}
+        //   });
+        //   self.getConfigAxios(url)
+        // }, 200);
+        // });
+        // `;
         // let str = "";
         // str += 'var url = require(["N/url"], function (url) {';
         // str += "try {";
@@ -193,27 +208,27 @@ export default {
     },
     assignConfigResult(response) {
       console.log("📍 ~ assignConfigResult ~ response", response);
-      let data = null;
-      if (typeof response.data == "string") {
-        let indexstart = response.data.indexOf("<!--") * 1;
-        let indexfinish = response.data.lastIndexOf("-->") * 1;
-        if (indexstart && indexfinish) {
-          indexfinish += 3;
-          let characters = response.data.slice(indexstart, indexfinish);
-          data = response.data.replace(characters, "");
-        } else {
-          data = response.data;
-        }
-        if (data != null) {
-          data = JSON.parse(data);
-        }
-      } else {
-        data = response.data;
-      }
-      if (data.success === true) {
+      // let data = null;
+      // if (typeof response.data == "string") {
+      //   let indexstart = response.data.indexOf("<!--") * 1;
+      //   let indexfinish = response.data.lastIndexOf("-->") * 1;
+      //   if (indexstart && indexfinish) {
+      //     indexfinish += 3;
+      //     let characters = response.data.slice(indexstart, indexfinish);
+      //     data = response.data.replace(characters, "");
+      //   } else {
+      //     data = response.data;
+      //   }
+      //   if (data != null) {
+      //     data = JSON.parse(data);
+      //   }
+      // } else {
+      //   data = response.data;
+      // }
+      if (response.success === true) {
         this.setLoading(false);
-        this.setConfigSite(data.result[0]);
-        this.setAllConfigs(data.result);
+        this.setConfigSite(response.result[0]);
+        this.setAllConfigs(response.result);
         if (this.allConfigs.length === 1) {
           let company = this.allConfigs[0].id;
           this.setConfigParamSearch(company);
@@ -227,7 +242,7 @@ export default {
       } else {
         this.showError();
         this.setStatusRequestTicket(false);
-        this.setMessageTicket(data.details);
+        this.setMessageTicket(response.details);
       }
     },
     showError() {
@@ -253,15 +268,15 @@ export default {
         let self = this;
         console.log("sendTime -self:", self);
         let str = `
-                var urlMode=null;
-                require(["N/url"],function(urlMode){
-                    var url=urlMode.resolveScript({
+        var httpsMode=null;
+        require(['N/https'],function(httpsMode){
+          var url=httpsMode.requestSuitelet({
                         scriptId:'customscript_efx_fe_kioskopageload_sl',
                         deploymentId:"customdeploy_efx_fe_kioskopageload_sl",
-                        returnExternalUrl:true,
-                        params:{sendTime:'${strObjSendTime}'}
+                        external:true,
+                        urlParams:{sendTime:'${strObjSendTime}'}
                     });
-                    self.getSendTimeResponse(url)
+                    console.log("RESP time: ", url.body);
                 });
             `;
         eval(str);

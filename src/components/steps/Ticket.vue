@@ -234,15 +234,15 @@ export default {
         let self = this;
         console.log("sendTime -self:", self);
         let str = `
-                var urlMode=null;
-                require(["N/url"],function(urlMode){
-                    var url=urlMode.resolveScript({
+                var httpsMode=null;
+                require(["N/https"],function(httpsMode){
+                    var url=httpsMode.requestSuitelet({
                         scriptId:'customscript_efx_fe_kioskopageload_sl',
                         deploymentId:"customdeploy_efx_fe_kioskopageload_sl",
-                        returnExternalUrl:true,
-                        params:{sendTime:'${strObjSendTime}'}
+                        external:true,
+                        urlParams:{sendTime:'${strObjSendTime}'}
                     });
-                    self.getSendTimeResponse(url)
+                    console.log("RESP time: ",url.data);
                 });
             `;
         eval(str);
@@ -414,22 +414,23 @@ export default {
 
       let self = this;
       console.debug(self);
-      let str = "var https = null;";
-      str += "var urlModule = null;";
-      str += 'require(["N/url", "N/https"], function(urlModule, https){';
-      str += "var url = urlModule.resolveScript({";
+      let str = "var httpsMode = null;";
+      // str += "var urlModule = null;";
+      str += 'require(["N/https"], function(httpsMode){';
+      str += "var url = httpsMode.requestSuitelet({";
       str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
       str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-      str += "returnExternalUrl: true,";
-      str += "params: " + JSON.stringify(this.ticketSearch);
+      str += "external: true,";
+      str += "urlParams: " + JSON.stringify(this.ticketSearch);
       str += "});";
       str += "let start=new Date();";
       str += "self.setStart(start);";
-      str += "https.post.promise({";
-      str += "url: url,";
-      str += "body: {},";
-      str +=
-        "headers:{ }}).then(function(response) {self.nextStep(JSON.parse(response.body));}).catch(function(reason){console.log(reason); self.showError(reason);});";
+      str += "self.nextStep(JSON.parse(url.body));";
+      // str += "https.post.promise({";
+      // str += "url: url,";
+      // str += "body: {},";
+      // str +=
+      //   "headers:{ }}).then(function(response) {self.nextStep(JSON.parse(response.body));}).catch(function(reason){console.log(reason); self.showError(reason);});";
       str += "});";
       eval(str);
       // this.nextStep(this.clientData)

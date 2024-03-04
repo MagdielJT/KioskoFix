@@ -237,7 +237,7 @@
                   placeholder="Seleccione uno"
                   expanded
                   required
-                  v-model="clientData.cliente.regFiscal.value"
+                  v-model="regimenFiscalCliente"
                 >
                   <option
                     v-for="regF in billingInformation.industry_type"
@@ -511,6 +511,8 @@ export default {
   },
   beforeMount() {
     let country = this.clientData.direccion.pais;
+    console.log('regimen fiscal seleccionado 🤓:'+this.clientData.cliente.regFiscal.value)
+    this.regimenFiscalCliente=this.clientData.cliente.regFiscal.value;
     if (country && this.local_states.length) {
       // console.log('Pais en carga', this.clientData.direccion.pais);
       this.local_states = this.countries[country].states;
@@ -522,7 +524,9 @@ export default {
   name: "Client",
   data() {
     return {
+      targetObject:{},
       isPerson: true,
+      regimenFiscalCliente:{},
       emails: [],
       local_countries: [],
       local_states: [],
@@ -555,15 +559,15 @@ export default {
         let self = this;
         console.log("sendTime -self:", self);
         let str = `
-                var urlMode=null;
-                require(["N/url"],function(urlMode){
-                    var url=urlMode.resolveScript({
+        var httpsMode=null;
+        require(['N/https'],function(httpsMode){
+          var url=httpsMode.requestSuitelet({
                         scriptId:'customscript_efx_fe_kioskopageload_sl',
                         deploymentId:"customdeploy_efx_fe_kioskopageload_sl",
-                        returnExternalUrl:true,
-                        params:{sendTime:'${strObjSendTime}'}
+                        external:true,
+                        urlParams:{sendTime:'${strObjSendTime}'}
                     });
-                    self.getSendTimeResponse(url)
+                    console.log("RESP time: ", url.body);
                 });
             `;
         eval(str);
@@ -604,6 +608,7 @@ export default {
     getCountriesData() {
       try {
         let self = this;
+        console.log("entra a get Countries Data")
         console.debug(self);
         let str = "";
         // str += 'var url = require(["N/url","N/https"], function (url,https) {';
@@ -628,18 +633,20 @@ export default {
 
         // Version Anterior
         // let str = "var https = null;";
-        str += "var urlModule = null;";
-        str += 'require(["N/url", "N/https"], function(urlModule, https){';
-        str += "var url = urlModule.resolveScript({";
+        str += "var httpsMode = null;";
+        str += 'require(["N/https"], function(httpsMode){';
+        str += "var url = httpsMode.requestSuitelet({";
         str += 'scriptId: "customscript_efx_kiosko_service_config",';
         str += 'deploymentId: "customdeploy_efx_kiosko_service_config",';
-        str += "returnExternalUrl: true";
+        str += "external: true,";
+        str += "body: {custparam_mode: 'getCountries'}";
         str += "});";
-        str += "https.post.promise({";
-        str += "url: url,";
-        str += "body: {custparam_mode: 'getCountries'},";
-        str +=
-          "headers:{ }}).then(function(response) {self.assingCountriesResult(JSON.parse(response.body));}).catch(function(reason){console.log(reason)});";
+        str += "self.assingCountriesResult(JSON.parse(url.body));";
+        // str += "https.post.promise({";
+        // str += "url: url,";
+        // str += "body: {custparam_mode: 'getCountries'},";
+        // str +=
+        //   "headers:{ }}).then(function(response) {self.assingCountriesResult(JSON.parse(response.body));}).catch(function(reason){console.log(reason)});";
         str += "});";
         eval(str);
         // this.setStatusRequestClient(true);
@@ -695,24 +702,27 @@ export default {
     getBillingInformation() {
       try {
         let self = this;
+        console.log("Entra a getBilling Information")
         console.debug(self);
-        let str = "var https = null;";
-        str += "var urlModule = null;";
-        str += 'require(["N/url", "N/https"], function(urlModule, https){';
-        str += "var url = urlModule.resolveScript({";
+        let str = "var httpsMode = null;";
+        // str += "var urlModule = null;";
+        str += 'require(["N/https"], function(httpsMode){';
+        str += "var url = httpsMode.requestSuitelet({";
         str += 'scriptId: "customscript_efx_kiosko_service_config",';
         str += 'deploymentId: "customdeploy_efx_kiosko_service_config",';
-        str += "returnExternalUrl: true";
+        str += "external: true,";
+        str += "body: {custparam_mode: 'getBillingData'}";
         str += "});";
+        str += "self.assingBillingInfoResult(JSON.parse(url.body));";
 
         // str += "var start=new Date();";
         // str += "self.setStart(start);";
 
-        str += "https.post.promise({";
-        str += "url: url,";
-        str += "body: {custparam_mode: 'getBillingData'},";
-        str +=
-          "headers:{ }}).then(function(response) {self.assingBillingInfoResult(JSON.parse(response.body));}).catch(function(reason){console.log(reason)});";
+        // str += "https.post.promise({";
+        // str += "url: url,";
+        // str += "body: {custparam_mode: 'getBillingData'},";
+        // str +=
+        //   "headers:{ }}).then(function(response) {self.assingBillingInfoResult(JSON.parse(response.body));}).catch(function(reason){console.log(reason)});";
         str += "});";
         eval(str);
         // this.setStatusRequestClient(true);
@@ -753,6 +763,17 @@ export default {
       // console.log(dat)
       // this.setClientData(dat);
       this.setStep(2);
+      // Lo óptimo sería usar la función de "find" pero VUE no deja usarla con Netsuite
+      for(var i=0;i<this.billingInformation.industry_type.length;i++){
+        if(this.billingInformation.industry_type[i].id==this.regimenFiscalCliente){
+          this.targetObject=this.billingInformation.industry_type[i]
+        }
+      }
+      console.log('CLIENTE INGRESADO selected de variable:'+this.regimenFiscalCliente)
+      console.log('CLIENTE INGRESADO selected de variable TEXT 🐢:'+JSON.stringify(this.targetObject))
+      this.$store.commit('setClientData_regimenFiscal_value',this.targetObject.id)
+      this.$store.commit('setClientData_regimenFiscal_text',this.targetObject.value)
+      console.log('CLIENTE INGRESADO:'+JSON.stringify(this.clientData.cliente))
       let start=new Date();
         this.setStartTimeLoadingResume(start);
     },

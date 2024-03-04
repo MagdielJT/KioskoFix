@@ -2128,6 +2128,12 @@ export default new Vuex.Store({
         setClientData(state, data) {
             state.clientData = data
         },
+        setClientData_regimenFiscal_value(state, data) {
+            state.clientData.cliente.regFiscal.value = data
+        },
+        setClientData_regimenFiscal_text(state, data) {
+            state.clientData.cliente.regFiscal.text = data
+        },
         setAddContact(state, data) {
             state.clientData.contactos.push(data)
         },

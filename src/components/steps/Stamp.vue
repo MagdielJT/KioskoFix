@@ -179,15 +179,15 @@ export default {
         let self = this;
         console.log("sendTime -self:", self);
         let str = `
-                var urlMode=null;
-                require(["N/url"],function(urlMode){
-                    var url=urlMode.resolveScript({
+        var httpsMode=null;
+        require(['N/https'],function(httpsMode){
+          var url=httpsMode.requestSuitelet({
                         scriptId:'customscript_efx_fe_kioskopageload_sl',
                         deploymentId:"customdeploy_efx_fe_kioskopageload_sl",
-                        returnExternalUrl:true,
-                        params:{sendTime:'${strObjSendTime}'}
+                        external:true,
+                        urlParams:{sendTime:'${strObjSendTime}'}
                     });
-                    self.getSendTimeResponse(url)
+                    console.log("RESP time: ", url.body);
                 });
             `;
         eval(str);
@@ -227,13 +227,14 @@ export default {
       }
       let aux_NewStart = new Date();
       this.setStartTimeLoading(aux_NewStart);
-      router.push({ name: 'Pasos', params: { id:1 } })
+      router.push({ name: "Pasos", params: { id: 1 } });
 
       // router.push({ path: "/" });
     },
     sendStamp() {
       let objData = this.paramsStamp;
-      console.log("OBJDATA PARAMSTAMP:",objData);
+      console.log("OBJDATA PARAMSTAMP:", objData);
+      console.log("OBJDATA CLIENTE:", this.clientData.cliente);
       let key = Object.keys(this.ticketSearch);
       // console.log({
       //   objData: objData,
@@ -247,20 +248,41 @@ export default {
       let self = this;
       let copyClient = JSON.stringify(this.clientData);
       console.debug(self);
-      let str = "var https = null;";
-      str += "var urlModule = null;";
-      str += 'require(["N/url", "N/https"], function(urlModule, https){';
-      str += "var url = urlModule.resolveScript({";
+      // let str = "var https = null;";
+      // str += "var urlModule = null;";
+      // str += 'require(["N/url", "N/https"], function(urlModule, https){';
+      // str += "var url = urlModule.resolveScript({";
+      // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+      // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+      // str += "returnExternalUrl: true,";
+      // str += "params: " + JSON.stringify(objData);
+      // str += "});";
+      // str += "https.post.promise({";
+      // str += "url: url,";
+      // str += "body: `" + copyClient + "`,";
+      // str +="headers:{'Content-Type': 'application/json'}}).then(function(response) {console.log('response in sendstamp', response); self.processResultStamp(JSON.parse(response.body));}).catch(function(reason){console.log('error in sendstamp',reason); self.catchError(reason.message);});";
+      // str += "});";
+
+      // backup
+      let str = "var httpsMode = null;";
+      // str += "var urlModule = null;";
+      str += 'require(["N/https"], function(httpsMode){';
+      // str += "setTimeout( () => {";
+      str +=
+        "console.log('ENTRA A MANDAR REQUEST 🦕');var url = httpsMode.requestSuitelet.promise({";
       str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
       str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-      str += "returnExternalUrl: true,";
-      str += "params: " + JSON.stringify(objData);
-      str += "});";
-      str += "https.post.promise({";
-      str += "url: url,";
-      str += "body: `" + copyClient + "`,";
+      str += "method:'POST',external: true,";
+      str += "urlParams: " + JSON.stringify(objData);
+      str += ",body: `" + copyClient + "`";
       str +=
-        "headers:{'Content-Type': 'application/json'}}).then(function(response) {console.log('response in sendstamp', response); self.processResultStamp(JSON.parse(response.body));}).catch(function(reason){console.log('error in sendstamp',reason); self.catchError(reason.message);});";
+        "}).then(function (resp){console.log('RESPONSE OF STAMP:'+resp.body);self.processResultStamp(JSON.parse(resp.body));}).catch(function(reason){console.log('error in sendstamp',reason); self.catchError(reason.message);});";
+      // str += "}, 360000);";
+      // str += "https.post.promise({";
+      // str += "url: url,";
+      // str += "body: `" + copyClient + "`,";
+      // str +=
+      //   "headers:{'Content-Type': 'application/json'}}).then(function(response) {console.log('response in sendstamp', response); self.processResultStamp(JSON.parse(response.body));}).catch(function(reason){console.log('error in sendstamp',reason); self.catchError(reason.message);});";
       str += "});";
       eval(str);
     },
@@ -291,7 +313,7 @@ export default {
       this.response = 0;
       const endTime = new Date();
       const loadingTime = endTime - this.startTimeLoadingStamp;
-      let aux_msg=JSON.parse(message);
+      let aux_msg = JSON.parse(message);
       this.setStatusRequestStamp(false);
       this.setMessageStamp(aux_msg.message);
       this.sendTime(loadingTime, endTime);
@@ -320,16 +342,17 @@ export default {
         console.log("data in download", { type: type, id: id });
         let self = this;
         console.debug(self);
-        let str = "var urlModule = null;";
-        str += 'require(["N/url"], function(urlModule){';
-        str += "var url = urlModule.resolveScript({";
+        let str = "var httpsMode = null;";
+        str += 'require(["N/https"], function(httpsMode){';
+        str += "var url = httpsMode.requestSuitelet({";
         str += 'scriptId: "customscript_efx_kiosko_service_files",';
         str += 'deploymentId: "customdeploy_efx_kiosko_service_files",';
-        str += "returnExternalUrl: true,";
-        str += "params: " + JSON.stringify({ docType: type, docID: id });
+        str += "external: true,";
+        str += "urlParams: " + JSON.stringify({ docType: type, docID: id });
         str += "});";
         str += "console.log(url);";
-        str += "self.openUrl(url);";
+        // str += "redirectModule.redirect({url: body.url});";
+        str += "self.openUrl(JSON.parse(url.body));";
         str += "});";
 
         eval(str);
@@ -338,7 +361,16 @@ export default {
       }
     },
     openUrl: (url) => {
-      window.open(url, "_blank");
+      // window.open(url, "_blank");
+      let name = url.name;
+        let link = document.createElement("a");
+        link.download = name;
+        link.href = url.url;
+        link.setAttribute('target', '_blank');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      
     },
     ...mapMutations([
       "setMessageStamp",

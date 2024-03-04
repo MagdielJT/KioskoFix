@@ -155,15 +155,15 @@ export default {
         let self = this;
         console.log("sendTime -self:", self);
         let str = `
-                var urlMode=null;
-                require(["N/url"],function(urlMode){
-                    var url=urlMode.resolveScript({
+                var httpsMode=null;
+                require(["N/https"],function(httpsMode){
+                    var url=httpsMode.requestSuitelet({
                         scriptId:'customscript_efx_fe_kioskopageload_sl',
                         deploymentId:"customdeploy_efx_fe_kioskopageload_sl",
-                        returnExternalUrl:true,
-                        params:{sendTime:'${strObjSendTime}'}
+                        external:true,
+                        urlParams:{sendTime:'${strObjSendTime}'}
                     });
-                    self.getSendTimeResponse(url)
+                    console.log("RESP time: ", url.body);
                 });
             `;
         eval(str);
