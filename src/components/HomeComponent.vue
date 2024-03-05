@@ -10,9 +10,9 @@
           <div class="column is-3" v-for="company of allConfigs" :key="company.id">
             <div class="box" @click="selectCompany(company.id)">
               <article class="media">
-                <div class="media-content">
+                <div class="media-left">
                   <figure class="image is-64x64">
-                    <img :src="company.logo" alt="Image">
+                    <img :src="company.logo" alt="Logo">
                   </figure>
                 </div>
                 <div class="media-content">
