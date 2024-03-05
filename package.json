@@ -1,6 +1,6 @@
 {
-  "name": "kioskov2020",
-  "version": "0.1.0",
+  "name": "kiosko_2020",
+  "version": "1.8.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
