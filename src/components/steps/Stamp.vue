@@ -8,7 +8,7 @@
             <div class="columns">
               <div class="column is-half is-offset-one-quarter">
                 <section>
-                  <small>Su factura se esta generando</small>
+                  <small style="font-size: 0.6rem">{{ process_msg }}</small>
                   <div class="is-inline-flex">
                     <HollowDotsSpinner
                       :animation-duration="1000"
@@ -135,6 +135,7 @@ export default {
       success: true,
       response: null,
       msg_alt: "",
+      process_msg: "Procesando petición, por favor espere...",
     };
   },
   created() {
@@ -246,48 +247,344 @@ export default {
         }
       }
       let self = this;
+      let auxRazonSocial = this.clientData.cliente.razonSocial.replace(
+        /"/g,
+        "*"
+      );
+      this.$store.commit("setClientData_razonSocial", auxRazonSocial);
+      if (this.clientData.cliente.compania) {
+        let auxCompania = this.clientData.cliente.compania.replace(/"/g, "*");
+        this.$store.commit("setClientData_compania", auxCompania);
+        console.log("compañia", auxCompania);
+      }
+
+      console.log("RAZON SOCIAL", auxRazonSocial);
       let copyClient = JSON.stringify(this.clientData);
       console.debug(self);
-      // let str = "var https = null;";
-      // str += "var urlModule = null;";
-      // str += 'require(["N/url", "N/https"], function(urlModule, https){';
-      // str += "var url = urlModule.resolveScript({";
-      // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-      // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-      // str += "returnExternalUrl: true,";
-      // str += "params: " + JSON.stringify(objData);
-      // str += "});";
-      // str += "https.post.promise({";
-      // str += "url: url,";
-      // str += "body: `" + copyClient + "`,";
-      // str +="headers:{'Content-Type': 'application/json'}}).then(function(response) {console.log('response in sendstamp', response); self.processResultStamp(JSON.parse(response.body));}).catch(function(reason){console.log('error in sendstamp',reason); self.catchError(reason.message);});";
-      // str += "});";
+      console.log({ copyClient });
+      this.process_msg = "Se está procesando su factura, por favor espere...";
+      let copyCliente = JSON.parse(copyClient);
+      let params2send = {
+        actualizandoKiosko: true,
+        recordType: copyCliente.transaccion.transType.toLowerCase(),
+        idTransaccion: copyCliente.transaccion.transId,
+      };
+      let str = `let urlModule = null;
+      let httpsModule = null;
+      require(["N/https","N/url"], function(httpsModule,urlModule){
+let suiteletUrl = urlModule.resolveScript({
+  scriptId: 'customscript_efx_fe_kiosko_connection_sl',
+  deploymentId: 'customdeploy_efx_fe_kiosko_connection_sl',
+  returnExternalUrl: true,
+  params: ${JSON.stringify(objData)}
+});
 
+console.log({suiteletUrl});
+
+    let response = httpsModule.post.promise({
+      url: suiteletUrl,
+      body: ${JSON.stringify(copyClient)},
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  .then(response => {
+    console.log('Response first stuff:', response.body);
+    self.sendStampSecondStep(JSON.parse(response.body));
+  })
+  .catch(error => {
+    console.log('Error:', error);
+    self.checkIfKioskoInfoUpdated('${JSON.stringify(params2send)}');
+  });
+});
+`;
+
+      eval(str);
+    },
+    checkIfKioskoInfoUpdated(objData) {
+      // Caso de que no es necesario crear una FV, y solo necesita actualizar datos de kiosko en transaccion
+      console.log("OBJDATA 🦀:", objData);
+      objData = JSON.parse(objData);
+      if (objData.finishedKUpdate) {
+        console.log(
+          "finished updating kiosko info in transaction:",
+          objData.finishedKUpdate
+        );
+        // second step pero entrando a caso de timbrado
+        this.sendStampSecondStep(objData);
+      } else {
+        setTimeout(() => {
+          let self = this;
+          console.debug(self);
+          let str = "var httpsMode = null;";
+          str += 'require(["N/https"], function(httpsMode){';
+          str +=
+            "console.log('ENTRA A CHECAR INFO KIOSKO ACTUALIZADA 🐣');var url = httpsMode.requestSuitelet.promise({";
+          str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+          str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+          str += "method:'POST',external: true,";
+          str += "urlParams: " + JSON.stringify(objData);
+          str += ",body: ''";
+          str +=
+            "}).then(function (resp){console.log('RESPONSE OF checkIfKioskoInfoUpdated:'+resp.body);setTimeout(self.checkIfKioskoInfoUpdated(resp.body),70000);}).catch(function(reason){console.log('error in checkIfKioskoInfoUpdated',reason); setTimeout(self.checkIfKioskoInfoUpdated(objData),50000)});";
+
+          str += "});";
+          eval(str);
+        }, 10000);
+      }
+    },
+    sendStampSecondStep(bodyResponse) {
+      let objData = bodyResponse;
+      console.log("OBJDATA PARAMSTAMP sendStampSecondStep:", objData);
+      if (objData.creaFactura == true || objData.creaFactura === "true") {
+        this.process_msg = "Se está creando su factura, por favor espere...";
+        let self = this;
+        let data2send = objData;
+        let backupData2Send = {
+          checkIfFinished: "true",
+          tipoTransaccion: data2send.tipoTransaccion,
+          idTransaccion: data2send.bodyTransaccion,
+        };
+        let params2send = { creaFactura: "true" };
+        console.debug(self);
+        let str = "let httpsModule = null;";
+        str += 'require(["N/https"], function(httpsModule){';
+
+        str += "console.log('Trying to send request to create invoice 🔦');";
+        str += " console.log('typeof data2send:',typeof data2send);";
+        str += " console.log(' data2send:', data2send);";
+        str += "var createInv= httpsModule.requestSuitelet.promise({";
+        str += " scriptId: 'customscript_efx_fe_kiosko_connection_sl',";
+        str += " deploymentId: 'customdeploy_efx_fe_kiosko_connection_sl',";
+        str += "method: 'POST',";
+        str += " external: true,";
+        str += "headers: {";
+        str += "'Content-Type': 'application/json'},";
+        str += "urlParams: " + JSON.stringify(params2send) + ",";
+        str += "body: `" + JSON.stringify(data2send) + "`,";
+        str += "}).then(function (resp){";
+        str +=
+          "console.log('Response of second step to create invoice:',resp.body);";
+        str += "self.sendStampSecondStepPDF(JSON.parse(resp.body));";
+        str += "}).catch(function(reason){";
+        str += "console.log('error in sendStampSecondStep',reason);";
+        // str+=" self.catchError(reason.message);"
+        str +=
+          "self.resendCreatedRelatedInvoiceStatus(3,5000,`" +
+          JSON.stringify(backupData2Send) +
+          "`);";
+        str += "});";
+        str += "});";
+        eval(str);
+      } else {
+        // timbrado
+        this.process_msg = "Se está timbrando su factura, por favor espere...";
+        let self2 = this;
+        let data2send_ = {
+          processingSaving: true,
+          recordType: objData.recordType,
+          idTransaccion: objData.idTransaccion,
+        };
+        console.debug(self2);
+        let str = "var httpsMode = null;";
+        str += 'require(["N/https"], function(httpsMode){';
+        str +=
+          "console.log('ENTRA A MANDAR REQUEST 🌟');var url = httpsMode.requestSuitelet.promise({";
+        str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+        str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+        str += "method:'POST',external: true,";
+        str += "urlParams: " + JSON.stringify(objData);
+        str += ",body: `" + JSON.stringify(objData) + "`,";
+        str +=
+          "}).then(function (resp){console.log('RESPONSE OF SECOND step to Stamp:'+resp.body);self2.sendStampSecondStepPDF(JSON.parse(resp.body));})";
+        str += ".catch(function(reason){";
+        str += "console.log('error in sendStampSecondStep',reason);";
+        str +=
+          "self2.checkStampingHasSaved(`" + JSON.stringify(data2send_) + "`);";
+        str += "});";
+
+        str += "});";
+        eval(str);
+      }
+    },
+    checkStampingHasSaved(objData) {
+      console.log("OBJDATA ⛳:", objData);
+      this.process_msg =
+        "Se está actualizando datos para timbrado, por favor espere...";
+      setTimeout(() => {
+        objData = JSON.parse(objData);
+        if (objData.finishedStamping) {
+          console.log("finished saving stamping data:", objData.finished);
+          this.sendStampSecondStepPDF(objData);
+        } else if (objData.errorKiosko) {
+          this.success = false;
+          this.response = 0;
+          this.msg_alt = objData.msgDetail;
+         
+          this.setStatusRequestStamp(false);
+          this.setMessageStamp(objData.msgDetail);
+          return;
+        } else {
+          let self = this;
+          console.debug(self);
+          console.log({ title: "objData", details: objData });
+          let str = "var httpsMode = null;";
+          str += 'require(["N/https"], function(httpsMode){';
+          str +=
+            "console.log('ENTRA A CHECAR TIMBRADO GUARDADO 📫🪼');var url = httpsMode.requestSuitelet.promise({";
+          str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+          str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+          str += "method:'POST',external: true,";
+          str += "urlParams: " + JSON.stringify(objData);
+          str += ",body: ''";
+          str +=
+            "}).then(function (resp){console.log('RESPONSE OF checkStampingHasSaved:'+resp.body);setTimeout(self.checkStampingHasSaved(resp.body),70000);}).catch(function(reason){console.log('error in checkStampingHasSaved',reason); setTimeout(self.checkStampingHasSaved(objData),50000)});";
+          str += "});";
+          eval(str);
+        }
+      }, 10000);
+    },
+    resendCreatedRelatedInvoiceStatus(retries, delay, objData) {
+      console.log("RETRIES:", retries);
+      console.log("DELAY:", delay);
+      this.process_msg = "Se está guardando su factura, por favor espere...";
+
+      console.log("OBJDATA:", objData);
+      setTimeout(() => {
+        objData = JSON.parse(objData);
+        console.log("OBJDATA POST Parse:", objData);
+
+        if (objData.finished) {
+          console.log("finished:", objData.finished);
+          this.sendStampSecondStep(objData);
+        } else {
+          if (retries == 0) {
+            this.success = false;
+            this.response = 0;
+            this.msg_alt =
+              "No se pudo timbrar la factura, por favor intente de nuevo";
+
+            this.setStatusRequestStamp(false);
+            this.setMessageStamp(
+              "No se pudo timbrar la factura, por favor intente de nuevo"
+            );
+            return;
+          } else {
+            let self = this;
+            console.debug(self);
+            console.log({ title: "objData", details: objData });
+            let str = "var httpsMode = null;";
+            str += 'require(["N/https"], function(httpsMode){';
+            str +=
+              "console.log('ENTRA A CHECAR');var url = httpsMode.requestSuitelet.promise({";
+            str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+            str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+            str += "method:'POST',external: true,";
+            str += "urlParams: " + JSON.stringify(objData);
+            str += ",body: ''";
+            str +=
+              "}).then(function (resp){console.log('RESPONSE OF resendCreatedRelatedInvoiceStatus:'+resp.body);setTimeout(self.resendCreatedRelatedInvoiceStatus(2,50000,(resp.body)),70000);}).catch(function(reason){console.log('error in sendStampSecondStep',reason); setTimeout(self.resendCreatedRelatedInvoiceStatus(2,5000),50000)});";
+            str += "});";
+            eval(str);
+          }
+        }
+      }, 10000);
+    },
+    sendStampSecondStepEmail(bodyResponse) {
+      let objData = bodyResponse;
+      objData.email = true;
+      console.log("OBJDATA PARAMSTAMP sendStampSecondStepEmail:", objData);
+      this.process_msg =
+        "Se está enviando por correo su XML y PDF, por favor espere...";
+      let self = this;
+      console.debug(self);
       // backup
       let str = "var httpsMode = null;";
-      // str += "var urlModule = null;";
       str += 'require(["N/https"], function(httpsMode){';
-      // str += "setTimeout( () => {";
       str +=
-        "console.log('ENTRA A MANDAR REQUEST 🦕');var url = httpsMode.requestSuitelet.promise({";
+        "console.log('ENTRA A MANDAR REQUEST EMAIL 📫');var url = httpsMode.requestSuitelet.promise({";
       str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
       str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
       str += "method:'POST',external: true,";
       str += "urlParams: " + JSON.stringify(objData);
-      str += ",body: `" + copyClient + "`";
+      str += ",body: ''";
       str +=
-        "}).then(function (resp){console.log('RESPONSE OF STAMP:'+resp.body);self.processResultStamp(JSON.parse(resp.body));}).catch(function(reason){console.log('error in sendstamp',reason); self.catchError(reason.message);});";
-      // str += "}, 360000);";
-      // str += "https.post.promise({";
-      // str += "url: url,";
-      // str += "body: `" + copyClient + "`,";
-      // str +=
-      //   "headers:{'Content-Type': 'application/json'}}).then(function(response) {console.log('response in sendstamp', response); self.processResultStamp(JSON.parse(response.body));}).catch(function(reason){console.log('error in sendstamp',reason); self.catchError(reason.message);});";
+        "}).then(function (resp){console.log('RESPONSE OF fourth step to Stamp:'+resp.body);self.processResultStamp(JSON.parse(resp.body));}).catch(function(reason){console.log('error in sendStampSecondStepEmail',reason); self.catchError(reason.message);});";
+
       str += "});";
       eval(str);
     },
+    sendStampSecondStepPDF(bodyResponse) {
+      let objData = bodyResponse;
+      if (objData.success === true || objData.success === "true") {
+        console.log("OBJDATA PARAMSTAMP sendStampSecondStepPDF:", objData);
+        this.process_msg = "Se está generando su PDF, por favor espere...";
+        let self = this;
+        console.debug(self);
+        let data2send = {
+          checkingPDF: true,
+          idTransaccion: objData.idTransaccion,
+          recordType: objData.recordType,
+        };
+        // backup
+        let str = "var httpsMode = null;";
+        str += 'require(["N/https"], function(httpsMode){';
+        str +=
+          "console.log('ENTRA A MANDAR REQUEST PDF 🪼');var url = httpsMode.requestSuitelet.promise({";
+        str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+        str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+        str += "method:'POST',external: true,";
+        str += "urlParams: " + JSON.stringify(objData);
+        str += ",body: `" + JSON.stringify(objData) + "`,";
+        str +=
+          "}).then(function (resp){console.log('RESPONSE OF third step to Stamp:'+resp.body);self.sendStampSecondStepEmail(JSON.parse(resp.body));}).catch(function(reason){console.log('error in sendStampSecondStepPDF',reason); self.checkPDFIsSaved(`" +
+          JSON.stringify(data2send) +
+          "`);});";
+
+        str += "});";
+        eval(str);
+      } else {
+        this.success = false;
+        this.response = 0;
+        this.msg_alt = objData.respuestaPac;
+        const endTime = new Date();
+        const loadingTime = endTime - this.startTimeLoadingStamp;
+        console.log("LOADING TIME  STAMP on error:", loadingTime);
+        this.setStatusRequestStamp(false);
+        this.setMessageStamp(objData.respuestaPac);
+        this.sendTime(loadingTime, endTime);
+        return;
+      }
+    },
+    checkPDFIsSaved(objData) {
+      console.log("OBJDATA ⛳:", objData);
+      setTimeout(() => {
+        objData = JSON.parse(objData);
+        if (objData.finishedPDF) {
+          console.log("finished saving pdf:", objData.finishedPDF);
+          this.sendStampSecondStepEmail(objData);
+        } else {
+          let self = this;
+          console.debug(self);
+          console.log({ title: "objData", details: objData });
+          let str = "var httpsMode = null;";
+          str += 'require(["N/https"], function(httpsMode){';
+          str +=
+            "console.log('ENTRA A CHECAR PDF');var url = httpsMode.requestSuitelet.promise({";
+          str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+          str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+          str += "method:'POST',external: true,";
+          str += "urlParams: " + JSON.stringify(objData);
+          str += ",body: `" + JSON.stringify(objData) + "`,";
+          str +=
+            "}).then(function (resp){console.log('RESPONSE OF checkPDFIsSaved:'+resp.body);setTimeout(self.checkPDFIsSaved(resp.body),70000);}).catch(function(reason){console.log('error in checkPDFIsSaved',reason); setTimeout(self.checkPDFIsSaved(objData),50000)});";
+          str += "});";
+          eval(str);
+        }
+      }, 10000);
+    },
     processResultStamp(result) {
-      if (result.success === true) {
+      if (result.success === true || result.success === "true") {
         this.success = true;
         this.response = result;
         const endTime = new Date();
@@ -363,14 +660,13 @@ export default {
     openUrl: (url) => {
       // window.open(url, "_blank");
       let name = url.name;
-        let link = document.createElement("a");
-        link.download = name;
-        link.href = url.url;
-        link.setAttribute('target', '_blank');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      
+      let link = document.createElement("a");
+      link.download = name;
+      link.href = url.url;
+      link.setAttribute("target", "_blank");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     },
     ...mapMutations([
       "setMessageStamp",

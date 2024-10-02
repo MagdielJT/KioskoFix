@@ -2131,6 +2131,12 @@ export default new Vuex.Store({
         setClientData_regimenFiscal_value(state, data) {
             state.clientData.cliente.regFiscal.value = data
         },
+        setClientData_razonSocial(state, data) {
+            state.clientData.cliente.razonSocial = data
+        },
+        setClientData_compania(state, data) {
+            state.clientData.cliente.compania = data
+        },
         setClientData_regimenFiscal_text(state, data) {
             state.clientData.cliente.regFiscal.text = data
         },

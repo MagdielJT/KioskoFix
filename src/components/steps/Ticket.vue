@@ -9,7 +9,6 @@
             </li>
           </ol>
           <div v-if="configSite.altMsg">
-
             <div class="note" v-if="configSite.altMsg.nDef">
               <div v-html="configSite.altMsg.nDef"></div>
             </div>
@@ -208,13 +207,13 @@ export default {
     };
   },
   created() {
-    console.log("Datos en ticket created:",this.configSite);
+    console.log("Datos en ticket created:", this.configSite);
   },
   mounted() {
-    console.log("Datos en ticket created:",this.configSite);
+    console.log("Datos en ticket created:", this.configSite);
     const endTime = new Date();
     const loadingTime = endTime - this.startTimeLoading;
-    if(loadingTime>3000){
+    if (loadingTime > 3000) {
       console.log("LOADING TIME TICKET: ", loadingTime);
       this.sendTime(loadingTime, endTime);
     }
@@ -372,10 +371,12 @@ export default {
       // if(this.ticketSearch.custparam_amount){
       //   this.setTicketCantidad(this.ticketSearch.custparam_amount);
       // }
-      if(this.ticketSearch.custparam_custbody_efx_iy_total_amount){
-        this.setTicketCantidad(this.ticketSearch.custparam_custbody_efx_iy_total_amount);
+      if (this.ticketSearch.custparam_custbody_efx_iy_total_amount) {
+        this.setTicketCantidad(
+          this.ticketSearch.custparam_custbody_efx_iy_total_amount
+        );
       }
-      if(this.ticketSearch.custparam_custbody_efx_iy_noticket){
+      if (this.ticketSearch.custparam_custbody_efx_iy_noticket) {
         this.setTicketId(this.ticketSearch.custparam_custbody_efx_iy_noticket);
       }
       this.setTicketRfc(this.ticketSearch.custparam_custentity_mx_rfc);
@@ -435,7 +436,7 @@ export default {
       eval(str);
       // this.nextStep(this.clientData)
     },
-    setStart(start){
+    setStart(start) {
       this.setStartTimeLoadingClient(start);
       this.setStartTimeLoadingStamp(start);
     },
@@ -445,7 +446,6 @@ export default {
         this.setClientData(dat);
         this.changeDefaultValue();
 
-        
         if (dat.transaccion.consulta === true && dat.transaccion.uuid != "") {
           this.setAction(false);
           this.setStep(3);
@@ -546,4 +546,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.container {
+  height: 100%;
+}
+</style>
