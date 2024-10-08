@@ -57,12 +57,12 @@
 <script>
 import { mapState, mapMutations, mapActions } from 'vuex'
 import router from '@/router'
-import axios from 'axios'
+// import axios from 'axios'
 // import HomeComponentVue from './components/HomeComponent.vue';
 
 export default {
   computed: {
-    ...mapState(['messageTicket', 'isLoading', 'configSite', 'allConfigs', 'startTimeLoading'])
+    ...mapState(['messageTicket', 'isLoading', 'configSite', 'allConfigs', 'startTimeLoading','serviceConfigUrl'])
   },
   // components:{
   //   HomeComponentVue
@@ -82,18 +82,36 @@ export default {
       try {
         let self = this
         console.debug('.', self)
-        let str = `var httpsMode = null
-        require(['N/https'], function (httpsMode) {
-          setTimeout(() => {
-            var url = httpsMode.requestSuitelet({
-              scriptId: 'customscript_efx_kiosko_service_config',
-              deploymentId: 'customdeploy_efx_kiosko_service_config',
-              external: true,
-              urlParams: { custparam_mode: 'configurationData' }
-            })
-            self.assignConfigResult(url.body)
-          }, 200)
-        })`
+        let str = `
+        var urlMode=null;
+      
+        require(['N/https','N/runtime'],function(httpsMode,runtime){
+          setTimeout( () => {
+          var runtimeAccountID = runtime.accountId;
+          if(runtimeAccountID.includes('5907646')){
+          
+          // make the store variable of serviceConfigUrl to be Vinoteca
+            self.setKioskoUrls('https://5907646.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=1418&deploy=1&compid=5907646&ns-at=AAEJ7tMQyivISljlyTWVzwLRrEONkEkEiWRwqqn3NvS77dVK4DI','https://5907646.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=1416&deploy=1&compid=5907646&ns-at=AAEJ7tMQNFa3GAZEHJxpoWe379BBrNPQ-GsSk4z29k9ebRSdnIg','https://5907646.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=3034&deploy=1&compid=5907646&ns-at=AAEJ7tMQE_2b-mftZxA9WY2p0tXeXGvDz1JElHtBLCPnQuGAtIg');
+
+          }
+          console.log("runtime AccountID: ", runtime.accountId);
+          
+         httpsMode.post.promise({
+            url: self.serviceConfigUrl,
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body:JSON.stringify({custparam_mode: 'configurationData'})
+          }).then(function(response) {
+            console.log('Response 🐣🐣:', response.body);
+            self.assignConfigResult(response.body);
+          }).catch(function(error) {
+            console.error('Error on request', error);
+          });
+
+        }, 200);
+        });
+        `;
         eval(str)
         // self.setStatusRequestTicket(true);
       } catch (e) {
@@ -101,6 +119,11 @@ export default {
         this.setMessageTicket('Ha ocurrido un error en realizar la petición para traer la configuración inicial de la empresa')
         console.error(e)
       }
+    },
+    setKioskoUrls(urlServiceConfig,urlKioskoConnection,urlDownloadService) {
+      this.$store.commit('setServiceConfigUrl',urlServiceConfig);
+      this.$store.commit('setKioskoConnectionUrl',urlKioskoConnection);
+      this.$store.commit('setDownloadFilesUrl',urlDownloadService);
     },
     errorOccurred(err) {
       try {
@@ -111,26 +134,26 @@ export default {
         console.log('Entro en catch de funcion errorOccurred', error)
       }
     },
-    getConfigAxios(urlRequest) {
-      const options = {
-        method: 'GET',
-        url: urlRequest,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-      axios
-        .request(options)
-        .then(res => {
-          console.log('axios.request ~ response', res.data)
-          this.assignConfigResult(res)
-        })
-        .catch(err => {
-          console.error('Error on request', err)
-          this.setStatusRequestTicket(false)
-          this.setMessageTicket('Ha ocurrido un error en realizar la petición para traer la configuración inicial de la empresa')
-        })
-    },
+    // getConfigAxios(urlRequest) {
+    //   const options = {
+    //     method: 'GET',
+    //     url: urlRequest,
+    //     headers: {
+    //       'Content-Type': 'application/json'
+    //     }
+    //   }
+    //   axios
+    //     .request(options)
+    //     .then(res => {
+    //       console.log('axios.request ~ response', res.data)
+    //       this.assignConfigResult(res)
+    //     })
+    //     .catch(err => {
+    //       console.error('Error on request', err)
+    //       this.setStatusRequestTicket(false)
+    //       this.setMessageTicket('Ha ocurrido un error en realizar la petición para traer la configuración inicial de la empresa')
+    //     })
+    // },
     assignConfigResult(response) {
       console.log('📍 ~ assignConfigResult ~ response', response)
       let data = null
@@ -173,9 +196,9 @@ export default {
         this.setLoading(false)
       }
       this.showTheError = true
-      const endTime = new Date()
-      const loadingTime = endTime - this.startTimeLoading
-      this.sendTime(loadingTime, endTime)
+      // const endTime = new Date()
+      // const loadingTime = endTime - this.startTimeLoading
+      // this.sendTime(loadingTime, endTime)
     },
     sendTime(time, date) {
       try {
@@ -207,26 +230,26 @@ export default {
         console.log('An error occurred on SendTime() in Ticket')
       }
     },
-    getSendTimeResponse(e) {
-      const t = {
-        method: 'GET',
-        url: e,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET,PUT,POST,OPTIONS',
-          'Access-Control-Allow-Headers': 'authorization'
-        }
-      }
-      axios
-        .request(t)
-        .then(b => {
-          console.log('RESP time: ', b.data)
-        })
-        .catch(err => {
-          console.log('Hubo errores en getSendTimeResponse app: ', err)
-        })
-    },
+    // getSendTimeResponse(e) {
+    //   const t = {
+    //     method: 'GET',
+    //     url: e,
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'Access-Control-Allow-Origin': '*',
+    //       'Access-Control-Allow-Methods': 'GET,PUT,POST,OPTIONS',
+    //       'Access-Control-Allow-Headers': 'authorization'
+    //     }
+    //   }
+    //   axios
+    //     .request(t)
+    //     .then(b => {
+    //       console.log('RESP time: ', b.data)
+    //     })
+    //     .catch(err => {
+    //       console.log('Hubo errores en getSendTimeResponse app: ', err)
+    //     })
+    // },
     goHome() {
       let cssCustom = document.getElementById('maincss')
       if (cssCustom) {

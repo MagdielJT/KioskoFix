@@ -28,7 +28,7 @@
               size="is-small"
               @click="showPolicies"
               v-if="configSite.politics && configSite.politics.length != 0"
-              >Políticas de uso
+              >Políticas de Uso
             </b-button>
           </div>
         </div>
@@ -157,14 +157,15 @@
         v-model="modalExampleTicket"
         trap-focus
         :destroy-on-hide="false"
-        :width="500"
+        :width="800"
         :can-cancel="['escape', 'outside']"
       >
         <div class="card">
           <div class="card-image">
-            <figure class="image">
-              <img :src="configSite.img_example" alt="Image" />
-            </figure>
+            <!-- <figure class="image"> -->
+              <!-- make image to use 100% of the modal -->
+              <img :src="configSite.img_example" alt="Image" class="modal-image"  />
+            <!-- </figure> -->
           </div>
         </div>
       </b-modal>
@@ -211,12 +212,12 @@ export default {
   },
   mounted() {
     console.log("Datos en ticket created:", this.configSite);
-    const endTime = new Date();
-    const loadingTime = endTime - this.startTimeLoading;
-    if (loadingTime > 3000) {
-      console.log("LOADING TIME TICKET: ", loadingTime);
-      this.sendTime(loadingTime, endTime);
-    }
+    // const endTime = new Date();
+    // const loadingTime = endTime - this.startTimeLoading;
+    // if (loadingTime > 3000) {
+    //   console.log("LOADING TIME TICKET: ", loadingTime);
+    //   this.sendTime(loadingTime, endTime);
+    // }
   },
   methods: {
     sendTime(time, date) {
@@ -414,31 +415,58 @@ export default {
       }
 
       let self = this;
-      console.debug(self);
-      let str = "var httpsMode = null;";
-      // str += "var urlModule = null;";
-      str += 'require(["N/https"], function(httpsMode){';
-      str += "var url = httpsMode.requestSuitelet({";
-      str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-      str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-      str += "external: true,";
-      str += "urlParams: " + JSON.stringify(this.ticketSearch);
-      str += "});";
-      str += "let start=new Date();";
-      str += "self.setStart(start);";
-      str += "self.nextStep(JSON.parse(url.body));";
-      // str += "https.post.promise({";
-      // str += "url: url,";
-      // str += "body: {},";
-      // str +=
-      //   "headers:{ }}).then(function(response) {self.nextStep(JSON.parse(response.body));}).catch(function(reason){console.log(reason); self.showError(reason);});";
-      str += "});";
+      console.debug('ticket self:',self);
+      // let str = "";
+      // str += 'require(["N/https"], function(httpsMode){';
+      // str += "var url = httpsMode.requestSuitelet({";
+      // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+      // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+      // str += "external: true,";
+      // str += "urlParams: " + JSON.stringify(this.ticketSearch);
+      // str += "});";
+      // str += "let start=new Date();";
+      // str += "self.setStart(start);";
+      // str += "self.nextStep(JSON.parse(url.body));";
+      // // str += "https.post.promise({";
+      // // str += "url: url,";
+      // // str += "body: {},";
+      // // str +=
+      // //   "headers:{ }}).then(function(response) {self.nextStep(JSON.parse(response.body));}).catch(function(reason){console.log(reason); self.showError(reason);});";
+      // str += "});";
+      let str = `
+      require(["N/https"],function(httpsMode){
+      setTimeout(function(){
+      console.log('KIOSKO URL Connection:',self.$store.state.kioskoConnectionUrl);
+      httpsMode.post.promise({
+        url:self.$store.state.kioskoConnectionUrl,
+        body: JSON.stringify(self.ticketSearch),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(function(response) {
+        console.log(response.body);
+        self.nextStep(JSON.parse(response.body));
+      }).catch(function(reason){
+        console.error(reason);
+      self.showError(reason);
+      });
+      }, 200);
+      });
+      `;
       eval(str);
       // this.nextStep(this.clientData)
     },
     setStart(start) {
       this.setStartTimeLoadingClient(start);
       this.setStartTimeLoadingStamp(start);
+    },
+    setKioskoUrls(urlKioskoConnection,urlDownloadService) {
+      console.log("URL KIOSKO: ",urlKioskoConnection);
+      this.$store.commit('setKioskoConnectionUrl',urlKioskoConnection);
+      // print kioskoConnectionUrl
+      console.log("URL KIOSKO AFTER: ",this.$store.state.kioskoConnectionUrl);
+      this.$store.commit('setDownloadFilesUrl',urlDownloadService);
+
     },
     nextStep(dat) {
       this.setLoading(false);
@@ -549,5 +577,10 @@ export default {
 <style scoped>
 .container {
   height: 100%;
+}
+.modal-image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important; /* This ensures the image covers the entire area without distortion */
 }
 </style>

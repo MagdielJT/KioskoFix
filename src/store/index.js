@@ -24,6 +24,9 @@ export default new Vuex.Store({
         ticketDate: '',
         ticketCantidad: '',
         ticketRfc: '',
+        serviceConfigUrl: '',
+        kioskoConnectionUrl: '',
+        downloadFilesUrl: '',
         allConfigs: [],
         // allConfigs: [
         //     {
@@ -2048,10 +2051,21 @@ export default new Vuex.Store({
         emailSelecteds: [],
     },
     mutations: {
+        // Added setters for Urls
+        setServiceConfigUrl(state, data) {
+            state.serviceConfigUrl = data
+        },
+        setKioskoConnectionUrl(state, data) {
+            state.kioskoConnectionUrl = data
+        },
+        setDownloadFilesUrl(state, data) {
+            state.downloadFilesUrl = data
+        },
         // **********Added variables for statistics************
         setTicketId(state, data) {
             state.ticketId = data
         },
+
         setTicketDate(state, data) {
             state.ticketDate = data
         },

@@ -126,10 +126,10 @@ export default {
   },
   created() {},
   mounted() {
-    const endTime = new Date();
-    const loadingTime = endTime - this.startTimeLoadingResume;
-    console.log("LOADING TIME RESUMEN: ", loadingTime);
-    this.sendTime(loadingTime, endTime);
+    // const endTime = new Date();
+    // const loadingTime = endTime - this.startTimeLoadingResume;
+    // console.log("LOADING TIME RESUMEN: ", loadingTime);
+    // this.sendTime(loadingTime, endTime);
   },
   data() {
     return {

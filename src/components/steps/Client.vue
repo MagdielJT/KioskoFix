@@ -610,44 +610,36 @@ export default {
         let self = this;
         console.log("entra a get Countries Data")
         console.debug(self);
-        let str = "";
-        // str += 'var url = require(["N/url","N/https"], function (url,https) {';
-        // str += "try {";
-        // str += "setTimeout( () => {";
-        // str += "var urlGotten = url.resolveScript({";
-        // str += 'scriptId: "customscript_efx_kiosko_service_config",';
-        // str += 'deploymentId: "customdeploy_efx_kiosko_service_config",';
-        // str += "returnExternalUrl: true,";
-        // str += 'params: { custparam_mode: "configurationData"}';
-        // str += "});";
-        // str += "https.post.promise({";
-        // str += "url: url,";
-        // str += "body: {custparam_mode: 'getCountries'},";
-        // str +=
-        //   "headers:{ }}).then(function(response) {self.assingCountriesResult(JSON.parse(response.body));}).catch(function(reason){console.log(reason)});";
-        // str += " }, 3000);";
-        // str += "} catch (err) {";
-        // str += 'self.errorOccurred("An error occurred:", err.message);';
-        // str += " }";
-        // str += "});";
+        // let str = "";
+        
 
         // Version Anterior
-        // let str = "var https = null;";
-        str += "var httpsMode = null;";
-        str += 'require(["N/https"], function(httpsMode){';
-        str += "var url = httpsMode.requestSuitelet({";
-        str += 'scriptId: "customscript_efx_kiosko_service_config",';
-        str += 'deploymentId: "customdeploy_efx_kiosko_service_config",';
-        str += "external: true,";
-        str += "body: {custparam_mode: 'getCountries'}";
-        str += "});";
-        str += "self.assingCountriesResult(JSON.parse(url.body));";
-        // str += "https.post.promise({";
-        // str += "url: url,";
-        // str += "body: {custparam_mode: 'getCountries'},";
-        // str +=
-        //   "headers:{ }}).then(function(response) {self.assingCountriesResult(JSON.parse(response.body));}).catch(function(reason){console.log(reason)});";
-        str += "});";
+        // str += "var httpsMode = null;";
+        // str += 'require(["N/https"], function(httpsMode){';
+        // str += "var url = httpsMode.requestSuitelet({";
+        // str += 'scriptId: "customscript_efx_kiosko_service_config",';
+        // str += 'deploymentId: "customdeploy_efx_kiosko_service_config",';
+        // str += "external: true,";
+        // str += "body: {custparam_mode: 'getCountries'}";
+        // str += "});";
+        // str += "self.assingCountriesResult(JSON.parse(url.body));";
+        
+        // str += "});";
+        let str=`
+        require(["N/https"],function(httpsMode){
+        httpsMode.post.promise({
+        url:self.$store.state.serviceConfigUrl,
+        body:JSON.stringify({custparam_mode: 'getCountries'}),
+        headers:{'Content-Type':'application/json'}
+        }).then(function(response){
+        self.assingCountriesResult(JSON.parse(response.body));
+        }).catch(function(reason){
+        console.error(reason);
+        self.setStatusRequestClient(false);
+        });
+
+        });
+        `;
         eval(str);
         // this.setStatusRequestClient(true);
       } catch (err) {
@@ -704,26 +696,31 @@ export default {
         let self = this;
         console.log("Entra a getBilling Information")
         console.debug(self);
-        let str = "var httpsMode = null;";
-        // str += "var urlModule = null;";
-        str += 'require(["N/https"], function(httpsMode){';
-        str += "var url = httpsMode.requestSuitelet({";
-        str += 'scriptId: "customscript_efx_kiosko_service_config",';
-        str += 'deploymentId: "customdeploy_efx_kiosko_service_config",';
-        str += "external: true,";
-        str += "body: {custparam_mode: 'getBillingData'}";
-        str += "});";
-        str += "self.assingBillingInfoResult(JSON.parse(url.body));";
+        // let str = "var httpsMode = null;";
+        // str += 'require(["N/https"], function(httpsMode){';
+        // str += "var url = httpsMode.requestSuitelet({";
+        // str += 'scriptId: "customscript_efx_kiosko_service_config",';
+        // str += 'deploymentId: "customdeploy_efx_kiosko_service_config",';
+        // str += "external: true,";
+        // str += "body: {custparam_mode: 'getBillingData'}";
+        // str += "});";
+        // str += "self.assingBillingInfoResult(JSON.parse(url.body));";
+        let str=`
+        require(["N/https"],function(httpsMode){
+        httpsMode.post.promise({
+        url:self.$store.state.serviceConfigUrl,
+        body:JSON.stringify({custparam_mode: 'getBillingData'}),
+        headers:{'Content-Type':'application/json'}
+        }).then(function(response){
+        self.assingBillingInfoResult(JSON.parse(response.body));
+        }).catch(function(reason){
+        console.error(reason);
+        self.setStatusRequestClient(false);
+        });
 
-        // str += "var start=new Date();";
-        // str += "self.setStart(start);";
-
-        // str += "https.post.promise({";
-        // str += "url: url,";
-        // str += "body: {custparam_mode: 'getBillingData'},";
-        // str +=
-        //   "headers:{ }}).then(function(response) {self.assingBillingInfoResult(JSON.parse(response.body));}).catch(function(reason){console.log(reason)});";
-        str += "});";
+        });
+        `;
+        
         eval(str);
         // this.setStatusRequestClient(true);
       } catch (err) {
@@ -743,7 +740,7 @@ export default {
         console.log("LOADING TIME CLIENT:", loadingTime);
         this.setStatusRequestClient(true);
         this.setMessageClient("Obtuvo información de facturación con éxito");
-        this.sendTime(loadingTime, endTime);
+        // this.sendTime(loadingTime, endTime);
       }else{
         this.setStatusRequestClient(false);
         this.setMessageClient(data.details);

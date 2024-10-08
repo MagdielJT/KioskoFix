@@ -155,7 +155,7 @@ export default {
         console.log("LOADING TIME  STAMP:", loadingTime);
         this.setStatusRequestStamp(true);
         this.setMessageStamp("Factura consultada con éxito");
-        this.sendTime(loadingTime, endTime);
+        // this.sendTime(loadingTime, endTime);
       } else {
         this.sendStamp();
       }
@@ -269,36 +269,54 @@ export default {
         recordType: copyCliente.transaccion.transType.toLowerCase(),
         idTransaccion: copyCliente.transaccion.transId,
       };
-      let str = `let urlModule = null;
-      let httpsModule = null;
-      require(["N/https","N/url"], function(httpsModule,urlModule){
-let suiteletUrl = urlModule.resolveScript({
-  scriptId: 'customscript_efx_fe_kiosko_connection_sl',
-  deploymentId: 'customdeploy_efx_fe_kiosko_connection_sl',
-  returnExternalUrl: true,
-  params: ${JSON.stringify(objData)}
-});
+      // combine the objData and copyClient
+      // let combinedData = { ...objData, ...copyClient };
+      // add copyClient to objData
+      Object.assign(objData, copyCliente);
+      console.log({ objData });
+      // console.log( combinedData );
+      //       let str = `let urlModule = null;
+      //       require(["N/https"], function(httpsModule){
 
-console.log({suiteletUrl});
-
-    let response = httpsModule.post.promise({
-      url: suiteletUrl,
-      body: ${JSON.stringify(copyClient)},
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-  .then(response => {
-    console.log('Response first stuff:', response.body);
-    self.sendStampSecondStep(JSON.parse(response.body));
-  })
-  .catch(error => {
-    console.log('Error:', error);
-    self.checkIfKioskoInfoUpdated('${JSON.stringify(params2send)}');
-  });
-});
-`;
-
+      //     let response = httpsModule.post.promise({
+      //       url: self.$store.state.kioskoConnectionUrl,
+      //       body: ${JSON.stringify(objData)},
+      //       headers: {
+      //         'Content-Type': 'application/json'
+      //       }
+      //     })
+      //   .then(response => {
+      //     console.log('Response first stuff:', response.body);
+      //     self.sendStampSecondStep(JSON.parse(response.body));
+      //   })
+      //   .catch(error => {
+      //     console.log('Error:', error);
+      //     self.checkIfKioskoInfoUpdated('${JSON.stringify(params2send)}');
+      //   });
+      // });
+      // `;
+      let str = "";
+      str += "let urlModule = null;";
+      str += 'require(["N/https"], function(httpsModule){';
+      str += "let response = httpsModule.post.promise({";
+      str += "  url: self.$store.state.kioskoConnectionUrl,";
+      str += "  body: `" + JSON.stringify(objData) + "`,";
+      str += "  headers: {";
+      str += "    'Content-Type': 'application/json'";
+      str += "  }";
+      str += "})";
+      str += ".then(response => {";
+      str += "  console.log('Response first stuff:', response.body);";
+      str += "  self.sendStampSecondStep(JSON.parse(response.body));";
+      str += "})";
+      str += ".catch(error => {";
+      str += "  console.log('Error:', error);";
+      str +=
+        "  self.checkIfKioskoInfoUpdated('" +
+        JSON.stringify(params2send) +
+        "');";
+      str += "});";
+      str += "});";
       eval(str);
     },
     checkIfKioskoInfoUpdated(objData) {
@@ -316,19 +334,36 @@ console.log({suiteletUrl});
         setTimeout(() => {
           let self = this;
           console.debug(self);
-          let str = "var httpsMode = null;";
-          str += 'require(["N/https"], function(httpsMode){';
-          str +=
-            "console.log('ENTRA A CHECAR INFO KIOSKO ACTUALIZADA 🐣');var url = httpsMode.requestSuitelet.promise({";
-          str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-          str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-          str += "method:'POST',external: true,";
-          str += "urlParams: " + JSON.stringify(objData);
-          str += ",body: ''";
-          str +=
-            "}).then(function (resp){console.log('RESPONSE OF checkIfKioskoInfoUpdated:'+resp.body);setTimeout(self.checkIfKioskoInfoUpdated(resp.body),70000);}).catch(function(reason){console.log('error in checkIfKioskoInfoUpdated',reason); setTimeout(self.checkIfKioskoInfoUpdated(objData),50000)});";
+          // let str = "var httpsMode = null;";
+          // str += 'require(["N/https"], function(httpsMode){';
+          // str +=
+          //   "console.log('ENTRA A CHECAR INFO KIOSKO ACTUALIZADA 🐣');var url = httpsMode.requestSuitelet.promise({";
+          // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+          // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+          // str += "method:'POST',external: true,";
+          // str += "urlParams: " + JSON.stringify(objData);
+          // str += ",body: ''";
+          // str +=
+          //   "}).then(function (resp){console.log('RESPONSE OF checkIfKioskoInfoUpdated:'+resp.body);setTimeout(self.checkIfKioskoInfoUpdated(resp.body),70000);}).catch(function(reason){console.log('error in checkIfKioskoInfoUpdated',reason); setTimeout(self.checkIfKioskoInfoUpdated(objData),50000)});";
 
-          str += "});";
+          // str += "});";
+          let str = `
+          require(["N/https"],function(httpsMode){
+          console.log('ENTRA A CHECAR INFO KIOSKO ACTUALIZADA 🐣');
+          httpsMode.post.promise({
+            url: self.$store.state.kioskoConnectionUrl,
+            body: ${JSON.stringify(objData)},
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(function(response){
+          setTimeout(self.checkIfKioskoInfoUpdated(response.body),70000);
+          }).catch(function(reason){
+            console.log('error in checkIfKioskoInfoUpdated',reason);
+            setTimeout(self.checkIfKioskoInfoUpdated(objData),50000);
+          });
+          });
+          `;
           eval(str);
         }, 10000);
       }
@@ -346,33 +381,74 @@ console.log({suiteletUrl});
           idTransaccion: data2send.bodyTransaccion,
         };
         let params2send = { creaFactura: "true" };
-        console.debug(self);
-        let str = "let httpsModule = null;";
-        str += 'require(["N/https"], function(httpsModule){';
+        // concat params2send to data2send
+        let combinedData = { ...data2send, ...params2send };
 
-        str += "console.log('Trying to send request to create invoice 🔦');";
-        str += " console.log('typeof data2send:',typeof data2send);";
-        str += " console.log(' data2send:', data2send);";
-        str += "var createInv= httpsModule.requestSuitelet.promise({";
-        str += " scriptId: 'customscript_efx_fe_kiosko_connection_sl',";
-        str += " deploymentId: 'customdeploy_efx_fe_kiosko_connection_sl',";
-        str += "method: 'POST',";
-        str += " external: true,";
+        console.debug(self);
+        // let str = "let httpsModule = null;";
+        // str += 'require(["N/https"], function(httpsModule){';
+        // str += "console.log('Trying to send request to create invoice 🔦');";
+        // str += " console.log('typeof data2send:',typeof data2send);";
+        // str += " console.log(' data2send:', data2send);";
+        // str += "var createInv= httpsModule.requestSuitelet.promise({";
+        // str += " scriptId: 'customscript_efx_fe_kiosko_connection_sl',";
+        // str += " deploymentId: 'customdeploy_efx_fe_kiosko_connection_sl',";
+        // str += "method: 'POST',";
+        // str += " external: true,";
+        // str += "headers: {";
+        // str += "'Content-Type': 'application/json'},";
+        // str += "urlParams: " + JSON.stringify(params2send) + ",";
+        // str += "body: `" + JSON.stringify(data2send) + "`,";
+        // str += "}).then(function (resp){";
+        // str +=
+        //   "console.log('Response of second step to create invoice:',resp.body);";
+        // str += "self.sendStampSecondStepPDF(JSON.parse(resp.body));";
+        // str += "}).catch(function(reason){";
+        // str += "console.log('error in sendStampSecondStep',reason);";
+        // str +=
+        //   "self.resendCreatedRelatedInvoiceStatus(3,5000,`" +
+        //   JSON.stringify(backupData2Send) +
+        //   "`);";
+        // str += "});";
+        // str += "});";
+        // let str=`
+        // require(["N/https"],function(httpsMode){
+        // httpsMode.post.promise({
+        // url: self.$store.state.kioskoConnectionUrl,
+        // body: ${JSON.stringify(combinedData)},
+        // headers: {
+        //   'Content-Type': 'application/json'
+        // }
+
+        // })
+        // .then(function(response){
+        //   console.log('Response of second step to create invoice:',response.body);
+        //   self.sendStampSecondStepPDF(JSON.parse(response.body));
+        // }).catch(function(reason){
+        //   console.log('error in sendStampSecondStep',reason);
+        //   self.resendCreatedRelatedInvoiceStatus(3,5000,${JSON.stringify(backupData2Send)});
+        // });
+        // });
+        // `;
+        let str = "";
+        str += 'require(["N/https"],function(httpsMode){';
+        str += "httpsMode.post.promise({";
+        str += "url: self.$store.state.kioskoConnectionUrl,";
+        str += "body: `" + JSON.stringify(combinedData) + "`,";
         str += "headers: {";
-        str += "'Content-Type': 'application/json'},";
-        str += "urlParams: " + JSON.stringify(params2send) + ",";
-        str += "body: `" + JSON.stringify(data2send) + "`,";
-        str += "}).then(function (resp){";
+        str += "'Content-Type': 'application/json'";
+        str += "}";
+        str += "})";
+        str += ".then(function(response){";
         str +=
-          "console.log('Response of second step to create invoice:',resp.body);";
-        str += "self.sendStampSecondStepPDF(JSON.parse(resp.body));";
+          "console.log('Response of second step to create invoice:',response.body);";
+        str += "self.sendStampSecondStep(JSON.parse(response.body));";
         str += "}).catch(function(reason){";
         str += "console.log('error in sendStampSecondStep',reason);";
-        // str+=" self.catchError(reason.message);"
         str +=
-          "self.resendCreatedRelatedInvoiceStatus(3,5000,`" +
+          "self.resendCreatedRelatedInvoiceStatus(3,5000," +
           JSON.stringify(backupData2Send) +
-          "`);";
+          ");";
         str += "});";
         str += "});";
         eval(str);
@@ -386,23 +462,61 @@ console.log({suiteletUrl});
           idTransaccion: objData.idTransaccion,
         };
         console.debug(self2);
-        let str = "var httpsMode = null;";
-        str += 'require(["N/https"], function(httpsMode){';
-        str +=
-          "console.log('ENTRA A MANDAR REQUEST 🌟');var url = httpsMode.requestSuitelet.promise({";
-        str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-        str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-        str += "method:'POST',external: true,";
-        str += "urlParams: " + JSON.stringify(objData);
-        str += ",body: `" + JSON.stringify(objData) + "`,";
-        str +=
-          "}).then(function (resp){console.log('RESPONSE OF SECOND step to Stamp:'+resp.body);self2.sendStampSecondStepPDF(JSON.parse(resp.body));})";
-        str += ".catch(function(reason){";
-        str += "console.log('error in sendStampSecondStep',reason);";
-        str +=
-          "self2.checkStampingHasSaved(`" + JSON.stringify(data2send_) + "`);";
-        str += "});";
+        // let str = "var httpsMode = null;";
+        // str += 'require(["N/https"], function(httpsMode){';
+        // str +=
+        //   "console.log('ENTRA A MANDAR REQUEST 🌟');var url = httpsMode.requestSuitelet.promise({";
+        // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+        // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+        // str += "method:'POST',external: true,";
+        // str += "urlParams: " + JSON.stringify(objData);
+        // str += ",body: `" + JSON.stringify(objData) + "`,";
+        // str +=
+        //   "}).then(function (resp){console.log('RESPONSE OF SECOND step to Stamp:'+resp.body);self2.sendStampSecondStepPDF(JSON.parse(resp.body));})";
+        // str += ".catch(function(reason){";
+        // str += "console.log('error in sendStampSecondStep',reason);";
+        // str +=
+        //   "self2.checkStampingHasSaved(`" + JSON.stringify(data2send_) + "`);";
+        // str += "});";
 
+        // str += "});";
+        // let str = `
+        // require(["N/https"],function(httpsMode){
+        // console.log('ENTRA A MANDAR REQUEST 🌟');
+        // httpsMode.post.promise({
+        //   url: self2.$store.state.kioskoConnectionUrl,
+        //   body: ${JSON.stringify(objData)},
+        //   headers: {
+        //     'Content-Type': 'application/json'
+        //   }
+        // }).then(function(response){
+        //   console.log('RESPONSE OF SECOND step to Stamp:',response.body);
+        //   self2.sendStampSecondStepPDF(JSON.parse(response.body));
+        // }).catch(function(reason){
+        //   console.log('error in sendStampSecondStep',reason);
+        //   self2.checkStampingHasSaved(${JSON.stringify(data2send_)});
+        // });
+
+        // });
+        // `;
+        let str = "";
+        str += 'require(["N/https"],function(httpsMode){';
+        str += "console.log('ENTRA A MANDAR REQUEST 🌟');";
+        str += "httpsMode.post.promise({";
+        str += "  url: self2.$store.state.kioskoConnectionUrl,";
+        str += "  body: `" + JSON.stringify(objData) + "`,";
+        str += "  headers: {";
+        str += "    'Content-Type': 'application/json'";
+        str += "  }";
+        str += "}).then(function(response){";
+        str +=
+          "  console.log('RESPONSE OF SECOND step to Stamp:',response.body);";
+        str += "  self2.sendStampSecondStepPDF(JSON.parse(response.body));";
+        str += "}).catch(function(reason){";
+        str += "  console.log('error in sendStampSecondStep',reason);";
+        str +=
+          "  self2.checkStampingHasSaved(" + JSON.stringify(data2send_) + ");";
+        str += "});";
         str += "});";
         eval(str);
       }
@@ -420,7 +534,7 @@ console.log({suiteletUrl});
           this.success = false;
           this.response = 0;
           this.msg_alt = objData.msgDetail;
-         
+
           this.setStatusRequestStamp(false);
           this.setMessageStamp(objData.msgDetail);
           return;
@@ -428,18 +542,36 @@ console.log({suiteletUrl});
           let self = this;
           console.debug(self);
           console.log({ title: "objData", details: objData });
-          let str = "var httpsMode = null;";
-          str += 'require(["N/https"], function(httpsMode){';
-          str +=
-            "console.log('ENTRA A CHECAR TIMBRADO GUARDADO 📫🪼');var url = httpsMode.requestSuitelet.promise({";
-          str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-          str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-          str += "method:'POST',external: true,";
-          str += "urlParams: " + JSON.stringify(objData);
-          str += ",body: ''";
-          str +=
-            "}).then(function (resp){console.log('RESPONSE OF checkStampingHasSaved:'+resp.body);setTimeout(self.checkStampingHasSaved(resp.body),70000);}).catch(function(reason){console.log('error in checkStampingHasSaved',reason); setTimeout(self.checkStampingHasSaved(objData),50000)});";
-          str += "});";
+          // let str = "var httpsMode = null;";
+          // str += 'require(["N/https"], function(httpsMode){';
+          // str +=
+          //   "console.log('ENTRA A CHECAR TIMBRADO GUARDADO 📫🪼');var url = httpsMode.requestSuitelet.promise({";
+          // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+          // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+          // str += "method:'POST',external: true,";
+          // str += "urlParams: " + JSON.stringify(objData);
+          // str += ",body: ''";
+          // str +=
+          //   "}).then(function (resp){console.log('RESPONSE OF checkStampingHasSaved:'+resp.body);setTimeout(self.checkStampingHasSaved(resp.body),70000);}).catch(function(reason){console.log('error in checkStampingHasSaved',reason); setTimeout(self.checkStampingHasSaved(objData),50000)});";
+          // str += "});";
+          let str = `
+          require(["N/https"],function(httpsMode){
+          console.log('ENTRA A CHECAR TIMBRADO GUARDADO 📫🪼');
+          httpsMode.post.promise({
+            url: self.$store.state.kioskoConnectionUrl,
+            body: ${JSON.stringify(objData)},
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(function(response){
+            console.log('RESPONSE OF checkStampingHasSaved:',response.body);
+            setTimeout(self.checkStampingHasSaved(response.body),70000);
+          }).catch(function(reason){
+            console.log('error in checkStampingHasSaved',reason);
+            setTimeout(self.checkStampingHasSaved(objData),50000);
+          });
+          });
+          `;
           eval(str);
         }
       }, 10000);
@@ -473,18 +605,36 @@ console.log({suiteletUrl});
             let self = this;
             console.debug(self);
             console.log({ title: "objData", details: objData });
-            let str = "var httpsMode = null;";
-            str += 'require(["N/https"], function(httpsMode){';
-            str +=
-              "console.log('ENTRA A CHECAR');var url = httpsMode.requestSuitelet.promise({";
-            str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-            str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-            str += "method:'POST',external: true,";
-            str += "urlParams: " + JSON.stringify(objData);
-            str += ",body: ''";
-            str +=
-              "}).then(function (resp){console.log('RESPONSE OF resendCreatedRelatedInvoiceStatus:'+resp.body);setTimeout(self.resendCreatedRelatedInvoiceStatus(2,50000,(resp.body)),70000);}).catch(function(reason){console.log('error in sendStampSecondStep',reason); setTimeout(self.resendCreatedRelatedInvoiceStatus(2,5000),50000)});";
-            str += "});";
+            // let str = "var httpsMode = null;";
+            // str += 'require(["N/https"], function(httpsMode){';
+            // str +=
+            //   "console.log('ENTRA A CHECAR');var url = httpsMode.requestSuitelet.promise({";
+            // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+            // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+            // str += "method:'POST',external: true,";
+            // str += "urlParams: " + JSON.stringify(objData);
+            // str += ",body: ''";
+            // str +=
+            //   "}).then(function (resp){console.log('RESPONSE OF resendCreatedRelatedInvoiceStatus:'+resp.body);setTimeout(self.resendCreatedRelatedInvoiceStatus(2,50000,(resp.body)),70000);}).catch(function(reason){console.log('error in sendStampSecondStep',reason); setTimeout(self.resendCreatedRelatedInvoiceStatus(2,5000),50000)});";
+            // str += "});";
+            let str = `
+            require(["N/https"],function(httpsMode){
+            console.log('ENTRA A CHECAR');
+            httpsMode.post.promise({
+              url: self.$store.state.kioskoConnectionUrl,
+              body: ${JSON.stringify(objData)},
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }).then(function(response){
+              console.log('RESPONSE OF resendCreatedRelatedInvoiceStatus:',response.body);
+              setTimeout(self.resendCreatedRelatedInvoiceStatus(2,50000,(response.body)),70000);
+            }).catch(function(reason){
+              console.log('error in sendStampSecondStep',reason);
+              setTimeout(self.resendCreatedRelatedInvoiceStatus(2,5000),50000);
+            });
+            });
+            `;
             eval(str);
           }
         }
@@ -499,23 +649,60 @@ console.log({suiteletUrl});
       let self = this;
       console.debug(self);
       // backup
-      let str = "var httpsMode = null;";
-      str += 'require(["N/https"], function(httpsMode){';
-      str +=
-        "console.log('ENTRA A MANDAR REQUEST EMAIL 📫');var url = httpsMode.requestSuitelet.promise({";
-      str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-      str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-      str += "method:'POST',external: true,";
-      str += "urlParams: " + JSON.stringify(objData);
-      str += ",body: ''";
-      str +=
-        "}).then(function (resp){console.log('RESPONSE OF fourth step to Stamp:'+resp.body);self.processResultStamp(JSON.parse(resp.body));}).catch(function(reason){console.log('error in sendStampSecondStepEmail',reason); self.catchError(reason.message);});";
+      // let str = "var httpsMode = null;";
+      // str += 'require(["N/https"], function(httpsMode){';
+      // str +=
+      //   "console.log('ENTRA A MANDAR REQUEST EMAIL 📫');var url = httpsMode.requestSuitelet.promise({";
+      // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+      // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+      // str += "method:'POST',external: true,";
+      // str += "urlParams: " + JSON.stringify(objData);
+      // str += ",body: ''";
+      // str +=
+      //   "}).then(function (resp){console.log('RESPONSE OF fourth step to Stamp:'+resp.body);self.processResultStamp(JSON.parse(resp.body));}).catch(function(reason){console.log('error in sendStampSecondStepEmail',reason); self.catchError(reason.message);});";
 
+      // str += "});";
+      // let str = `
+      // require(["N/https"],function(httpsMode){
+      // console.log('ENTRA A MANDAR REQUEST EMAIL 📫');
+      // httpsMode.post.promise({
+      //   url: self.$store.state.kioskoConnectionUrl,
+      //   body: ${JSON.stringify(objData)},
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   }
+      // }).then(function(response){
+      //   console.log('RESPONSE OF fourth step to Stamp:',response.body);
+      //   self.processResultStamp(JSON.parse(response.body));
+      // }).catch(function(reason){
+      //   console.log('error in sendStampSecondStepEmail',reason);
+      //   self.catchError(reason.message);
+      // });
+      // });
+      // `;
+      let str = "";
+      str += 'require(["N/https"],function(httpsMode){';
+      str += "console.log('ENTRA A MANDAR REQUEST EMAIL 📫');";
+      str += "httpsMode.post.promise({";
+      str += "  url: self.$store.state.kioskoConnectionUrl,";
+      str += "  body: `" + JSON.stringify(objData) + "`,";
+      str += "  headers: {";
+      str += "    'Content-Type': 'application/json'";
+      str += "  }";
+      str += "}).then(function(response){";
+      str +=
+        "  console.log('RESPONSE OF fourth step to Stamp:',response.body);";
+      str += "  self.processResultStamp(JSON.parse(response.body));";
+      str += "}).catch(function(reason){";
+      str += "  console.log('error in sendStampSecondStepEmail',reason);";
+      str += "  self.catchError(reason.message);";
+      str += "});";
       str += "});";
       eval(str);
     },
     sendStampSecondStepPDF(bodyResponse) {
       let objData = bodyResponse;
+      console.log('sendStampSecondStepPDF',bodyResponse);
       if (objData.success === true || objData.success === "true") {
         console.log("OBJDATA PARAMSTAMP sendStampSecondStepPDF:", objData);
         this.process_msg = "Se está generando su PDF, por favor espere...";
@@ -527,20 +714,56 @@ console.log({suiteletUrl});
           recordType: objData.recordType,
         };
         // backup
-        let str = "var httpsMode = null;";
-        str += 'require(["N/https"], function(httpsMode){';
-        str +=
-          "console.log('ENTRA A MANDAR REQUEST PDF 🪼');var url = httpsMode.requestSuitelet.promise({";
-        str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-        str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-        str += "method:'POST',external: true,";
-        str += "urlParams: " + JSON.stringify(objData);
-        str += ",body: `" + JSON.stringify(objData) + "`,";
-        str +=
-          "}).then(function (resp){console.log('RESPONSE OF third step to Stamp:'+resp.body);self.sendStampSecondStepEmail(JSON.parse(resp.body));}).catch(function(reason){console.log('error in sendStampSecondStepPDF',reason); self.checkPDFIsSaved(`" +
-          JSON.stringify(data2send) +
-          "`);});";
+        // let str = "var httpsMode = null;";
+        // str += 'require(["N/https"], function(httpsMode){';
+        // str +=
+        //   "console.log('ENTRA A MANDAR REQUEST PDF 🪼');var url = httpsMode.requestSuitelet.promise({";
+        // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+        // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+        // str += "method:'POST',external: true,";
+        // str += "urlParams: " + JSON.stringify(objData);
+        // str += ",body: `" + JSON.stringify(objData) + "`,";
+        // str +=
+        //   "}).then(function (resp){console.log('RESPONSE OF third step to Stamp:'+resp.body);self.sendStampSecondStepEmail(JSON.parse(resp.body));}).catch(function(reason){console.log('error in sendStampSecondStepPDF',reason); self.checkPDFIsSaved(`" +
+        //   JSON.stringify(data2send) +
+        //   "`);});";
 
+        // str += "});";
+        // let str = `
+        // require(["N/https"],function(httpsMode){
+        // console.log('ENTRA A MANDAR REQUEST PDF 🪼');
+        // httpsMode.post.promise({
+        //   url: self.$store.state.kioskoConnectionUrl,
+        //   body: ${JSON.stringify(objData)},
+        //   headers: {
+        //     'Content-Type': 'application/json'
+        //   }
+        // }).then(function(response){
+        //   console.log('RESPONSE OF third step to Stamp:',response.body);
+        //   self.sendStampSecondStepEmail(JSON.parse(response.body));
+        // }).catch(function(reason){
+        //   console.log('error in sendStampSecondStepPDF',reason);
+        //   self.checkPDFIsSaved(${JSON.stringify(data2send)});
+        // });
+        // });
+        // `;
+        let str = "";
+        str += 'require(["N/https"],function(httpsMode){';
+        str += "console.log('ENTRA A MANDAR REQUEST PDF 🪼');";
+        str += "httpsMode.post.promise({";
+        str += "  url: self.$store.state.kioskoConnectionUrl,";
+        str += "  body: `" + JSON.stringify(objData) + "`,";
+        str += "  headers: {";
+        str += "    'Content-Type': 'application/json'";
+        str += "  }";
+        str += "}).then(function(response){";
+        str +=
+          "  console.log('RESPONSE OF third step to Stamp:',response.body);";
+        str += "  self.sendStampSecondStepEmail(JSON.parse(response.body));";
+        str += "}).catch(function(reason){";
+        str += "  console.log('error in sendStampSecondStepPDF',reason);";
+        str += "  self.checkPDFIsSaved(" + JSON.stringify(data2send) + ");";
+        str += "});";
         str += "});";
         eval(str);
       } else {
@@ -552,7 +775,7 @@ console.log({suiteletUrl});
         console.log("LOADING TIME  STAMP on error:", loadingTime);
         this.setStatusRequestStamp(false);
         this.setMessageStamp(objData.respuestaPac);
-        this.sendTime(loadingTime, endTime);
+        // this.sendTime(loadingTime, endTime);
         return;
       }
     },
@@ -567,18 +790,36 @@ console.log({suiteletUrl});
           let self = this;
           console.debug(self);
           console.log({ title: "objData", details: objData });
-          let str = "var httpsMode = null;";
-          str += 'require(["N/https"], function(httpsMode){';
-          str +=
-            "console.log('ENTRA A CHECAR PDF');var url = httpsMode.requestSuitelet.promise({";
-          str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
-          str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
-          str += "method:'POST',external: true,";
-          str += "urlParams: " + JSON.stringify(objData);
-          str += ",body: `" + JSON.stringify(objData) + "`,";
-          str +=
-            "}).then(function (resp){console.log('RESPONSE OF checkPDFIsSaved:'+resp.body);setTimeout(self.checkPDFIsSaved(resp.body),70000);}).catch(function(reason){console.log('error in checkPDFIsSaved',reason); setTimeout(self.checkPDFIsSaved(objData),50000)});";
-          str += "});";
+          // let str = "var httpsMode = null;";
+          // str += 'require(["N/https"], function(httpsMode){';
+          // str +=
+          //   "console.log('ENTRA A CHECAR PDF');var url = httpsMode.requestSuitelet.promise({";
+          // str += 'scriptId: "customscript_efx_fe_kiosko_connection_sl",';
+          // str += 'deploymentId: "customdeploy_efx_fe_kiosko_connection_sl",';
+          // str += "method:'POST',external: true,";
+          // str += "urlParams: " + JSON.stringify(objData);
+          // str += ",body: `" + JSON.stringify(objData) + "`,";
+          // str +=
+          //   "}).then(function (resp){console.log('RESPONSE OF checkPDFIsSaved:'+resp.body);setTimeout(self.checkPDFIsSaved(resp.body),70000);}).catch(function(reason){console.log('error in checkPDFIsSaved',reason); setTimeout(self.checkPDFIsSaved(objData),50000)});";
+          // str += "});";
+          let str = `
+          require(["N/https"],function(httpsMode){
+          console.log('ENTRA A CHECAR PDF');
+          httpsMode.post.promise({
+            url: self.$store.state.kioskoConnectionUrl,
+            body: ${JSON.stringify(objData)},
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(function(response){
+            console.log('RESPONSE OF checkPDFIsSaved:',response.body);
+            setTimeout(self.checkPDFIsSaved(response.body),70000);
+          }).catch(function(reason){
+            console.log('error in checkPDFIsSaved',reason);
+            setTimeout(self.checkPDFIsSaved(objData),50000);
+          });
+          });
+          `;
           eval(str);
         }
       }, 10000);
@@ -592,7 +833,7 @@ console.log({suiteletUrl});
         console.log("LOADING TIME  STAMP:", loadingTime);
         this.setStatusRequestStamp(true);
         this.setMessageStamp("Factura timbrada con éxito");
-        this.sendTime(loadingTime, endTime);
+        // this.sendTime(loadingTime, endTime);
       } else {
         this.success = false;
         this.response = 0;
@@ -602,18 +843,18 @@ console.log({suiteletUrl});
         console.log("LOADING TIME  STAMP on error:", loadingTime);
         this.setStatusRequestStamp(false);
         this.setMessageStamp(result.respuestaPac);
-        this.sendTime(loadingTime, endTime);
+        // this.sendTime(loadingTime, endTime);
       }
     },
     catchError(message) {
       this.success = false;
       this.response = 0;
-      const endTime = new Date();
-      const loadingTime = endTime - this.startTimeLoadingStamp;
+      // const endTime = new Date();
+      // const loadingTime = endTime - this.startTimeLoadingStamp;
       let aux_msg = JSON.parse(message);
       this.setStatusRequestStamp(false);
       this.setMessageStamp(aux_msg.message);
-      this.sendTime(loadingTime, endTime);
+      // this.sendTime(loadingTime, endTime);
     },
     downloadPDF() {
       if (this.response.pdf) {
@@ -639,17 +880,50 @@ console.log({suiteletUrl});
         console.log("data in download", { type: type, id: id });
         let self = this;
         console.debug(self);
-        let str = "var httpsMode = null;";
-        str += 'require(["N/https"], function(httpsMode){';
-        str += "var url = httpsMode.requestSuitelet({";
-        str += 'scriptId: "customscript_efx_kiosko_service_files",';
-        str += 'deploymentId: "customdeploy_efx_kiosko_service_files",';
-        str += "external: true,";
-        str += "urlParams: " + JSON.stringify({ docType: type, docID: id });
+        // let str = "var httpsMode = null;";
+        // str += 'require(["N/https"], function(httpsMode){';
+        // str += "var url = httpsMode.requestSuitelet({";
+        // str += 'scriptId: "customscript_efx_kiosko_service_files",';
+        // str += 'deploymentId: "customdeploy_efx_kiosko_service_files",';
+        // str += "external: true,";
+        // str += "urlParams: " + JSON.stringify({ docType: type, docID: id });
+        // str += "});";
+        // str += "console.log(url);";
+        // // str += "redirectModule.redirect({url: body.url});";
+        // str += "self.openUrl(JSON.parse(url.body));";
+        // str += "});";
+        // let str = `
+        // require(["N/https"],function(httpsMode){
+        // httpsMode.post.promise({
+        //   url: self.$store.state.kioskoConnectionUrl,
+        //   body: ${JSON.stringify({ docType: type, docID: id })},
+        //   headers: {
+        //     'Content-Type': 'application/json'
+        //   }
+        // }).then(function(response){
+        //   console.log('RESPONSE OF checkPDFIsSaved:',response.body);
+        //   self.openUrl(JSON.parse(response.body));
+        // }).catch(function(reason){
+        //   console.log('error in checkPDFIsSaved',reason);
+        //   self.openUrl(JSON.parse(response.body));
+        // });
+        // });
+        // `;
+        let str = "";
+        str += 'require(["N/https"],function(httpsMode){';
+        str += "httpsMode.post.promise({";
+        str += "  url: self.$store.state.downloadFilesUrl,";
+        str += "  body: `" + JSON.stringify({ docType: type, docID: id }) + "`,";
+        str += "  headers: {";
+        str += "    'Content-Type': 'application/json'";
+        str += "  }";
+        str += "}).then(function(response){";
+        str += "  console.log('RESPONSE OF checkPDFIsSaved:',response.body);";
+        str += "  self.openUrl(JSON.parse(response.body));";
+        str += "}).catch(function(reason){";
+        str += "  console.log('error in checkPDFIsSaved',reason);";
+        str += "  self.openUrl(JSON.parse(response.body));";
         str += "});";
-        str += "console.log(url);";
-        // str += "redirectModule.redirect({url: body.url});";
-        str += "self.openUrl(JSON.parse(url.body));";
         str += "});";
 
         eval(str);
