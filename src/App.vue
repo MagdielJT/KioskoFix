@@ -89,10 +89,15 @@ export default {
           setTimeout( () => {
           var runtimeAccountID = runtime.accountId;
           if(runtimeAccountID.includes('5907646')){
-          
           // make the store variable of serviceConfigUrl to be Vinoteca
             self.setKioskoUrls('https://5907646.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=1418&deploy=1&compid=5907646&ns-at=AAEJ7tMQyivISljlyTWVzwLRrEONkEkEiWRwqqn3NvS77dVK4DI','https://5907646.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=1416&deploy=1&compid=5907646&ns-at=AAEJ7tMQNFa3GAZEHJxpoWe379BBrNPQ-GsSk4z29k9ebRSdnIg','https://5907646.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=3034&deploy=1&compid=5907646&ns-at=AAEJ7tMQE_2b-mftZxA9WY2p0tXeXGvDz1JElHtBLCPnQuGAtIg');
-
+          }else if(runtimeAccountID.includes('5610219')){
+          // make the store variable of serviceConfigUrl to be Buena Prensa
+            self.setKioskoUrls('https://5610219.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=1656&deploy=1&compid=5610219&ns-at=AAEJ7tMQ7UtskdehEcmrgrFLuhdRUw7hzOBxOmE_kRCJ-Ppg26Q','https://5610219.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=1652&deploy=1&compid=5610219&ns-at=AAEJ7tMQkO91HaIXsplA7HyXDRy_ezQEoEbUN7OpyhmfeOD_Ak8','https://5610219.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=2349&deploy=1&compid=5610219&ns-at=AAEJ7tMQuqbvTwGFYnQsBVBmK1EB26RN2v2hTvtITvl5ZTas4Fk');
+          
+          }else if(runtimeAccountID.includes('4804048_SB1')){
+          // make the store variable of serviceConfigUrl to be Ganon SB1
+            self.setKioskoUrls('https://4804048-sb1.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=2967&deploy=1&compid=4804048_SB1&ns-at=AAEJ7tMQB3fBiJZquMbpnZKhsqB_Bz9bPL1cq4XA2K4fGj6qguQ','https://4804048-sb1.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=2963&deploy=1&compid=4804048_SB1&ns-at=AAEJ7tMQQFx7iJbPsuGwEXFwbxvANae9tE5_OFeik4rdHP60Tck','https://4804048-sb1.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=2976&deploy=1&compid=4804048_SB1&ns-at=AAEJ7tMQsQdTzmiTXHoFD0cRmPGZQJJAKQbTWVXyDjrLiR-wuLo');
           }
           console.log("runtime AccountID: ", runtime.accountId);
           

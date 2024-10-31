@@ -617,24 +617,44 @@ export default {
             // str +=
             //   "}).then(function (resp){console.log('RESPONSE OF resendCreatedRelatedInvoiceStatus:'+resp.body);setTimeout(self.resendCreatedRelatedInvoiceStatus(2,50000,(resp.body)),70000);}).catch(function(reason){console.log('error in sendStampSecondStep',reason); setTimeout(self.resendCreatedRelatedInvoiceStatus(2,5000),50000)});";
             // str += "});";
-            let str = `
-            require(["N/https"],function(httpsMode){
-            console.log('ENTRA A CHECAR');
-            httpsMode.post.promise({
-              url: self.$store.state.kioskoConnectionUrl,
-              body: ${JSON.stringify(objData)},
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }).then(function(response){
-              console.log('RESPONSE OF resendCreatedRelatedInvoiceStatus:',response.body);
-              setTimeout(self.resendCreatedRelatedInvoiceStatus(2,50000,(response.body)),70000);
-            }).catch(function(reason){
-              console.log('error in sendStampSecondStep',reason);
-              setTimeout(self.resendCreatedRelatedInvoiceStatus(2,5000),50000);
-            });
-            });
-            `;
+            // let str = `
+            // require(["N/https"],function(httpsMode){
+            // console.log('ENTRA A CHECAR');
+            // httpsMode.post.promise({
+            //   url: self.$store.state.kioskoConnectionUrl,
+            //   body: ${JSON.stringify(objData)},
+            //   headers: {
+            //     'Content-Type': 'application/json'
+            //   }
+            // }).then(function(response){
+            //   console.log('RESPONSE OF resendCreatedRelatedInvoiceStatus:',response.body);
+            //   setTimeout(self.resendCreatedRelatedInvoiceStatus(2,50000,(response.body)),70000);
+            // }).catch(function(reason){
+            //   console.log('error in sendStampSecondStep',reason);
+            //   setTimeout(self.resendCreatedRelatedInvoiceStatus(2,5000),50000);
+            // });
+            // });
+            // `;
+            let str = "";
+            str += 'require(["N/https"],function(httpsMode){';
+            str += "console.log('ENTRA A CHECAR');";
+            str += "httpsMode.post.promise({";
+            str += "  url: self.$store.state.kioskoConnectionUrl,";
+            str += "  body: `" + JSON.stringify(objData) + "`,";
+            str += "  headers: {";
+            str += "    'Content-Type': 'application/json'";
+            str += "  }";
+            str += "}).then(function(response){";
+            str +=
+              "  console.log('RESPONSE OF resendCreatedRelatedInvoiceStatus:',response.body);";
+            str +=
+              "  setTimeout(self.resendCreatedRelatedInvoiceStatus(2,50000,(response.body)),70000);";
+            str += "}).catch(function(reason){";
+            str += "  console.log('error in sendStampSecondStep',reason);";
+            str +=
+              "  setTimeout(self.resendCreatedRelatedInvoiceStatus(2,5000),50000);";
+            str += "});";
+            str += "});";
             eval(str);
           }
         }
@@ -702,7 +722,7 @@ export default {
     },
     sendStampSecondStepPDF(bodyResponse) {
       let objData = bodyResponse;
-      console.log('sendStampSecondStepPDF',bodyResponse);
+      console.log("sendStampSecondStepPDF", bodyResponse);
       if (objData.success === true || objData.success === "true") {
         console.log("OBJDATA PARAMSTAMP sendStampSecondStepPDF:", objData);
         this.process_msg = "Se está generando su PDF, por favor espere...";
@@ -913,7 +933,8 @@ export default {
         str += 'require(["N/https"],function(httpsMode){';
         str += "httpsMode.post.promise({";
         str += "  url: self.$store.state.downloadFilesUrl,";
-        str += "  body: `" + JSON.stringify({ docType: type, docID: id }) + "`,";
+        str +=
+          "  body: `" + JSON.stringify({ docType: type, docID: id }) + "`,";
         str += "  headers: {";
         str += "    'Content-Type': 'application/json'";
         str += "  }";
